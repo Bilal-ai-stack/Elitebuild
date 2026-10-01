@@ -348,6 +348,58 @@ class GroqLLMProvider(LLMProvider):
     def get_model_name(self) -> str:
         return self.model
 
+    def check_health(self, probe_api: bool = False) -> Dict[str, Any]:
+        """
+        Check Groq health status.
+        Distinguishes:
+          - GROQ_CONFIGURED
+          - GROQ_NOT_CONFIGURED
+          - GROQ_AUTH_FAILED
+          - GROQ_RATE_LIMITED
+          - GROQ_UNAVAILABLE
+          - GROQ_HEALTHY
+        """
+        if not self.api_key:
+            return {
+                "status": "GROQ_NOT_CONFIGURED",
+                "model": self.model,
+                "configured": False,
+                "message": "GROQ_API_KEY environment variable not configured",
+            }
+
+        if not probe_api:
+            return {
+                "status": "GROQ_CONFIGURED",
+                "model": self.model,
+                "configured": True,
+                "message": f"Groq API key configured for model {self.model}",
+            }
+
+        try:
+            client = self._get_client()
+            client.models.list()
+            return {
+                "status": "GROQ_HEALTHY",
+                "model": self.model,
+                "configured": True,
+                "message": f"Groq Cloud API healthy and reachable ({self.model})",
+            }
+        except Exception as e:
+            err_str = str(e)
+            err_type = type(e).__name__
+            if "AuthenticationError" in err_type or "401" in err_str:
+                status = "GROQ_AUTH_FAILED"
+            elif "RateLimitError" in err_type or "429" in err_str:
+                status = "GROQ_RATE_LIMITED"
+            else:
+                status = "GROQ_UNAVAILABLE"
+            return {
+                "status": status,
+                "model": self.model,
+                "configured": True,
+                "error": err_str[:120],
+            }
+
 
 # ---------------------------------------------------------------------------
 # Mock LLM Provider (for development / testing)

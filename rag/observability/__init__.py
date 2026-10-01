@@ -37,6 +37,7 @@ from rag.observability.health import (
     check_liveness,
     check_readiness,
     check_rag_health,
+    check_groq_health,
     get_service_uptime_seconds,
 )
 from rag.observability.quality_monitor import (
@@ -96,6 +97,7 @@ __all__ = [
     "check_liveness",
     "check_readiness",
     "check_rag_health",
+    "check_groq_health",
     "get_service_uptime_seconds",
     "RegressionStatus",
     "QualityRegressionDetector",

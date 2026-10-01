@@ -334,13 +334,35 @@ def check_rag_health() -> Dict[str, Any]:
     try:
         llm = get_llm_provider()
         llm_model = llm.get_model_name()
-        components["llm"] = ComponentHealthStatus.HEALTHY.value
-        components["llm_provider"] = ComponentHealthStatus.HEALTHY.value
+        provider_name = getattr(settings, "llm_provider", "openai")
+
+        groq_details = None
+        if provider_name == "groq" or hasattr(llm, "check_health"):
+            groq_health = llm.check_health(probe_api=False) if hasattr(llm, "check_health") else check_groq_health()
+            groq_status = groq_health.get("status", "GROQ_CONFIGURED")
+            groq_details = groq_health
+            if groq_status == "GROQ_NOT_CONFIGURED":
+                components["llm"] = ComponentHealthStatus.NOT_CONFIGURED.value
+                components["llm_provider"] = ComponentHealthStatus.NOT_CONFIGURED.value
+                degraded_reasons.append("Groq LLM provider: GROQ_API_KEY not configured")
+            elif groq_status in ("GROQ_AUTH_FAILED", "GROQ_UNAVAILABLE"):
+                components["llm"] = ComponentHealthStatus.DEGRADED.value
+                components["llm_provider"] = ComponentHealthStatus.DEGRADED.value
+                degraded_reasons.append(f"Groq LLM provider {groq_status}")
+            else:
+                components["llm"] = ComponentHealthStatus.HEALTHY.value
+                components["llm_provider"] = ComponentHealthStatus.HEALTHY.value
+        else:
+            components["llm"] = ComponentHealthStatus.HEALTHY.value
+            components["llm_provider"] = ComponentHealthStatus.HEALTHY.value
+
         details["llm"] = {
-            "status": ComponentHealthStatus.HEALTHY.value,
-            "provider": getattr(settings, "llm_provider", "openai"),
+            "status": components["llm"],
+            "provider": provider_name,
             "model": llm_model,
         }
+        if groq_details:
+            details["llm"]["groq"] = groq_details
     except Exception as e:
         components["llm"] = ComponentHealthStatus.DEGRADED.value
         components["llm_provider"] = ComponentHealthStatus.DEGRADED.value
@@ -408,3 +430,23 @@ def check_rag_health() -> Dict[str, Any]:
         "details": details,
         "degraded_reasons": degraded_reasons,
     }
+
+
+def check_groq_health(
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+    probe_api: bool = False,
+) -> Dict[str, Any]:
+    """
+    Check Groq cloud LLM provider readiness.
+    Distinguishes:
+      - GROQ_HEALTHY
+      - GROQ_CONFIGURED
+      - GROQ_NOT_CONFIGURED
+      - GROQ_AUTH_FAILED
+      - GROQ_RATE_LIMITED
+      - GROQ_UNAVAILABLE
+    """
+    from rag.generation.llm_provider import GroqLLMProvider
+    provider = GroqLLMProvider(api_key=api_key or "", model=model or "")
+    return provider.check_health(probe_api=probe_api)

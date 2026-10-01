@@ -245,6 +245,22 @@ def cmd_gates(args):
     print("--------------------------------\n")
 
 
+def cmd_groq(args):
+    """Inspect and test Groq Cloud API LLM provider readiness."""
+    from rag.observability import check_groq_health
+    probe = getattr(args, "probe", False)
+    res = check_groq_health(probe_api=probe)
+    status = res.get("status", "UNKNOWN")
+    print(f"\n[GROQ] Groq Cloud LLM Status: {status}")
+    print(f"       Configured Model:      {res.get('model', 'llama-3.3-70b-versatile')}")
+    print(f"       API Key Present:       {res.get('configured', False)}")
+    if res.get("message"):
+        print(f"       Status Message:        {res.get('message')}")
+    if res.get("error"):
+        print(f"       Error:                 {res.get('error')}")
+    print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="rag",
@@ -301,6 +317,10 @@ def main():
     # gates
     subparsers.add_parser("gates", help="Evaluate production quality gates")
 
+    # groq
+    groq_parser = subparsers.add_parser("groq", help="Inspect and test Groq Cloud LLM provider readiness")
+    groq_parser.add_argument("--probe", action="store_true", help="Perform minimal live connectivity check against Groq API")
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -327,6 +347,8 @@ def main():
         cmd_report(args)
     elif args.command == "gates":
         cmd_gates(args)
+    elif args.command == "groq":
+        cmd_groq(args)
     else:
         parser.print_help()
         sys.exit(1)

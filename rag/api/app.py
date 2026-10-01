@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from rag.config.settings import settings
@@ -42,6 +43,7 @@ from rag.observability import (
     check_liveness,
     check_rag_health,
     check_readiness,
+    check_groq_health,
     generate_operational_report,
     get_rag_logger,
     log_rag_query_telemetry,
@@ -66,6 +68,21 @@ app = FastAPI(
     version="1.3.0",
     docs_url="/api/v1/rag/docs",
     redoc_url="/api/v1/rag/redoc",
+)
+
+# CORS Configuration for Vercel, local preview, and production origins
+_allowed_origins = [
+    origin.strip()
+    for origin in settings.cors_allowed_origins.split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allowed_origins if _allowed_origins else ["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 
@@ -242,6 +259,14 @@ async def readiness_probe(response: Response):
     if not res["ready"]:
         response.status_code = 503
     return res
+
+
+@app.get("/health/groq")
+@app.get("/rag/health/groq")
+@app.get("/api/v1/rag/health/groq")
+async def groq_health_probe():
+    """Specific health check for Groq Cloud LLM provider."""
+    return check_groq_health()
 
 
 # ---------------------------------------------------------------------------
