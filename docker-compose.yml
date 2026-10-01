@@ -1,0 +1,23 @@
+# =============================================================================
+# ELITEBUILD — Docker Compose (Development)
+# =============================================================================
+# PostgreSQL with pgvector extension for both Prisma ORM and RAG vector storage.
+# Usage: docker compose up -d
+# Then set DATABASE_URL in .env to the connection string below.
+# =============================================================================
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: elitebuild
+      POSTGRES_PASSWORD: elitebuild
+      POSTGRES_DB: elitebuild
+    ports:
+      - '5432:5432'
+    volumes:
+      - elitebuild_pgdata:/var/lib/postgresql/data
+
+volumes:
+  elitebuild_pgdata:

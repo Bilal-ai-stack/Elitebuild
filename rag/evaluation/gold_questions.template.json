@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0-template",
+  "benchmark_name": "ELITEBUILD Enterprise RAG Gold Evaluation Benchmark",
+  "updated_at": "2026-09-30T08:45:00Z",
+  "notes": "Template seed containing verified anchor queries. Additional questions to complete the 25-50 benchmark set will be finalized in Step 11 following live ingestion.",
+  "test_cases": [
+    {
+      "test_case_id": "TC-CORP-001",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the official legal name and established year of the company?",
+      "ground_truth_answer": "The official legal entity name is M/S ELITE CONSTRUCTION COMPANY (Engineers & Constructors), established in 2006.",
+      "ground_truth_doc_ids": [
+        "doc-company-profile"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-corp-profile-001"
+      ],
+      "expected_citations": [
+        "Company Profile — Corporate Identity"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-002",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What Pakistan Engineering Council (PEC) licensing category does Elite Construction Company hold?",
+      "ground_truth_answer": "Elite Construction Company holds PEC Category C-1 (No Limit) registration, authorizing it for unlimited financial value civil engineering and highway works.",
+      "ground_truth_doc_ids": [
+        "doc-pec-c1-registration"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-pec-c1-001"
+      ],
+      "expected_citations": [
+        "Pakistan Engineering Council License — Category C-1"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-001",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What civil works were executed for the Swat Expressway Package 02?",
+      "ground_truth_answer": "Swat Expressway Package 02 involved dual-carriageway asphaltic roadway construction, earthworks, sub-base, base course, bridge structures, and culverts under client authority.",
+      "ground_truth_doc_ids": [
+        "doc-swat-expressway-completion"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-swat-exp-002"
+      ],
+      "expected_citations": [
+        "Substantial Completion Certificate — Swat Expressway PK-02"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-NEG-001",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Has Elite Construction Company constructed any nuclear power facilities or submarine tunnels?",
+      "ground_truth_answer": "There is no evidence in the authorized knowledge base indicating that M/S Elite Construction Company has engaged in nuclear power facility or submarine tunnel construction.",
+      "ground_truth_doc_ids": [],
+      "ground_truth_chunk_ids": [],
+      "expected_citations": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "required_security_level": "PUBLIC"
+    }
+  ]
+}

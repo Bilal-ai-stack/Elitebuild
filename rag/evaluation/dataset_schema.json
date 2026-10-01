@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ElitebuildRagGoldBenchmarkDataset",
+  "description": "Validation schema for ELITEBUILD RAG benchmark evaluation test cases.",
+  "type": "object",
+  "required": [
+    "version",
+    "benchmark_name",
+    "updated_at",
+    "test_cases"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "benchmark_name": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "test_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "test_case_id",
+          "category",
+          "query",
+          "ground_truth_answer",
+          "ground_truth_doc_ids",
+          "expected_status",
+          "required_security_level"
+        ],
+        "properties": {
+          "test_case_id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "CORPORATE_CREDENTIALS",
+              "CIVIL_INFRASTRUCTURE_PROJECTS",
+              "EQUIPMENT_FLEET",
+              "PERFORMANCE_CERTIFICATES",
+              "NEGATIVE_CONTROL_OUT_OF_DOMAIN"
+            ]
+          },
+          "query": {
+            "type": "string"
+          },
+          "ground_truth_answer": {
+            "type": "string"
+          },
+          "ground_truth_doc_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ground_truth_chunk_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expected_citations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expected_status": {
+            "type": "string",
+            "enum": [
+              "SUPPORTED",
+              "PARTIALLY_SUPPORTED",
+              "CONFLICTING_EVIDENCE",
+              "INSUFFICIENT_EVIDENCE"
+            ]
+          },
+          "required_security_level": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "AUTHENTICATED",
+              "EDITOR",
+              "ADMIN",
+              "PRIVATE"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

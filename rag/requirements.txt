@@ -1,0 +1,38 @@
+# =============================================================================
+# ELITEBUILD RAG Service — Python Dependencies
+# =============================================================================
+# Install: pip install -r rag/requirements.txt
+# =============================================================================
+
+# Core Framework
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.30.0,<1.0.0
+pydantic>=2.9.0,<3.0.0
+pydantic-settings>=2.5.0,<3.0.0
+
+# Database & Vector Store
+psycopg2-binary>=2.9.9,<3.0.0
+pgvector>=0.3.0,<1.0.0
+sqlalchemy>=2.0.30,<3.0.0
+
+# Embedding Providers
+openai>=1.40.0,<2.0.0
+tiktoken>=0.7.0,<1.0.0
+
+# LLM Providers (Cloud)
+groq>=0.9.0,<2.0.0
+
+# Reranking (local cross-encoder)
+sentence-transformers>=3.0.0,<4.0.0
+
+# Text Extraction
+python-docx>=1.1.0,<2.0.0
+
+# Utilities
+python-dotenv>=1.0.0,<2.0.0
+uuid6>=2024.1.12
+
+# Testing
+pytest>=8.3.0,<9.0.0
+pytest-asyncio>=0.24.0,<1.0.0
+httpx>=0.27.0,<1.0.0
