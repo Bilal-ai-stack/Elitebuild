@@ -1,0 +1,511 @@
+{
+  "version": "1.0.0",
+  "benchmark_name": "ELITEBUILD Enterprise RAG Gold Evaluation Benchmark",
+  "updated_at": "2026-10-01T08:00:00Z",
+  "test_cases": [
+    {
+      "test_case_id": "TC-CORP-001",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the official legal name and established year of the company?",
+      "ground_truth_answer": "The official legal entity name is M/S ELITE CONSTRUCTION COMPANY (Engineers & Constructors), established in 2006.",
+      "ground_truth_doc_ids": [
+        "doc-company-profile"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-company-profile-000"
+      ],
+      "expected_citations": [
+        "Company Profile — ELITE CONSTRUCTION COMPANY"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-002",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What Pakistan Engineering Council (PEC) licensing category does Elite Construction Company hold?",
+      "ground_truth_answer": "Elite Construction Company holds PEC Category C-1 (No Limit) registration, authorizing it for unlimited financial value civil engineering and highway works.",
+      "ground_truth_doc_ids": [
+        "doc-credential-pakistan-engineering-council-pec-license"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-credential-pakistan-engineering-council-pec-license-000"
+      ],
+      "expected_citations": [
+        "Credential — Pakistan Engineering Council (PEC) License"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-003",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "Where are the primary and secondary registered offices of Elite Construction Company located?",
+      "ground_truth_answer": "The primary office is located at Hamza Tower, F-11 Markaz, Islamabad, and the secondary office is at Jawad Tower, University Road, Peshawar, Pakistan.",
+      "ground_truth_doc_ids": [
+        "doc-company-profile"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-company-profile-000"
+      ],
+      "expected_citations": [
+        "Company Profile — ELITE CONSTRUCTION COMPANY"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-004",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the mission of Elite Construction Company?",
+      "ground_truth_answer": "To deliver high-grade civil and engineering infrastructure that exceeds regulatory standards, maintains durability, and serves the long-term strategic needs of our clients and communities.",
+      "ground_truth_doc_ids": [
+        "doc-company-profile"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-company-profile-000"
+      ],
+      "expected_citations": [
+        "Company Profile — ELITE CONSTRUCTION COMPANY"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-005",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the corporate vision of Elite Construction Company?",
+      "ground_truth_answer": "To be recognized as a premier engineering and contracting enterprise in Pakistan, distinguished by technical rigor, transparent execution, and structural integrity.",
+      "ground_truth_doc_ids": [
+        "doc-company-profile"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-company-profile-000"
+      ],
+      "expected_citations": [
+        "Company Profile — ELITE CONSTRUCTION COMPANY"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-006",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What government enlistment does Elite Construction Company hold with the Communication & Works Department?",
+      "ground_truth_answer": "Elite Construction Company holds prequalified contractor enlistment with the Communication & Works (C&W) Department, Government of Khyber Pakhtunkhwa, for provincial infrastructure, roads, and building construction contracts.",
+      "ground_truth_doc_ids": [
+        "doc-credential-communication-&-works-c&w-contractor-enlist"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-credential-communication-&-works-c&w-contractor-enlist-000"
+      ],
+      "expected_citations": [
+        "Credential — Communication & Works (C&W) Contractor Enlistment"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-007",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "Which institutional client bodies and government departments has Elite Construction Company worked with?",
+      "ground_truth_answer": "Documented institutional clients include the Communication & Works Department (C&W), Military Engineering Services (MES), Peshawar Development Authority (PDA), Islamabad / Tribal Electric Supply Companies (IESCO / TESCO), and public-sector universities.",
+      "ground_truth_doc_ids": [
+        "doc-client-organizations"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-client-organizations-000"
+      ],
+      "expected_citations": [
+        "Client Organizations — Elite Construction Company"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-008",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What capabilities and scope are included in Elite's Civil Construction service?",
+      "ground_truth_answer": "Comprehensive civil construction capabilities encompassing highway and road corridors, reinforced concrete bridges, drainage networks, institutional and administrative structures, and complex civil engineering groundworks.",
+      "ground_truth_doc_ids": [
+        "doc-service-civil-construction"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-service-civil-construction-000"
+      ],
+      "expected_citations": [
+        "Service — Civil Construction"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-009",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What does Elite Construction Company offer under Rehabilitation and Maintenance services?",
+      "ground_truth_answer": "Restoration and life-extension of aging civil infrastructure, including emergency rural road rehabilitation, structural repairs, pavement re-carpeting, drainage de-silting, and preventive facility maintenance.",
+      "ground_truth_doc_ids": [
+        "doc-service-rehabilitation-maintenance"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-service-rehabilitation-maintenance-000"
+      ],
+      "expected_citations": [
+        "Service — Rehabilitation & Maintenance"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-CORP-010",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What project management services does Elite Construction Company provide?",
+      "ground_truth_answer": "Technical project management adhering to engineering contracts, quality assurance protocols, site supervision, material testing, milestone tracking, and governmental compliance.",
+      "ground_truth_doc_ids": [
+        "doc-service-project-management"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-service-project-management-000"
+      ],
+      "expected_citations": [
+        "Service — Project Management"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-001",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What works were executed for the Dalazak Road repair and rehabilitation project in Peshawar?",
+      "ground_truth_answer": "Pavement rehabilitation, sub-base preparation, road surfacing, drainage clearing, and municipal corridor improvement extending from Shabistan Cinema / Hayat Hotel toward Dalazak Road via Sabzi Mandi under Communication & Works / Municipal Authorities.",
+      "ground_truth_doc_ids": [
+        "doc-project-road-repair-dalazak"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-road-repair-dalazak-000"
+      ],
+      "expected_citations": [
+        "Project — Road Repair & Rehabilitation"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-002",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What was the scope of the Garanga to Sher Killi road improvement project?",
+      "ground_truth_answer": "Corridor widening, earthworks, sub-grade stabilization, asphalt/surface dressing, and roadside drainage across the Garanga to Sher Killi corridor in Khyber Pakhtunkhwa.",
+      "ground_truth_doc_ids": [
+        "doc-project-garanga-sher-killi-road"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-garanga-sher-killi-road-000"
+      ],
+      "expected_citations": [
+        "Project — Garanga–Sher Killi Road Improvement"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-003",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "Under which program was the Pir Bala to Pir Kala road rehabilitation carried out?",
+      "ground_truth_answer": "It was executed under the Khyber Pakhtunkhwa Emergency Rural Road Rehabilitation Project, restoring connectivity, drainage, culvert construction, embankment stabilization, and bituminous surfacing.",
+      "ground_truth_doc_ids": [
+        "doc-project-pir-bala-to-pir-kala-road"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-pir-bala-to-pir-kala-road-000"
+      ],
+      "expected_citations": [
+        "Project — Pir Bala to Pir Kala Road Rehabilitation"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-004",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What types of educational and institutional buildings has Elite constructed?",
+      "ground_truth_answer": "School reconstruction, student hostels, multi-purpose halls, administrative offices, and associated civil infrastructure including structural reinforced concrete, brick masonry, roofing, internal finishes, and utility services.",
+      "ground_truth_doc_ids": [
+        "doc-project-institutional-building-works"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-institutional-building-works-000"
+      ],
+      "expected_citations": [
+        "Project — Institutional Building & Educational Facility Works"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-005",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What works were executed for the RCC Bridge and Approach Infrastructure project?",
+      "ground_truth_answer": "Reinforced cement concrete bridge structures, abutments, piers, superstructure RCC girders and deck slab, expansion joints, approach roads, guide bunds, and scour protection works across water crossings.",
+      "ground_truth_doc_ids": [
+        "doc-project-bridge-approach-works"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-bridge-approach-works-000"
+      ],
+      "expected_citations": [
+        "Project — RCC Bridge & Approach Infrastructure Works"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-006",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What civil and external works were undertaken for the Utility and Water Infrastructure project?",
+      "ground_truth_answer": "Underground pipeline trenching, manhole construction, storm drains, water distribution networks, sewerage channels, external paving, and boundary demarcation in Regional Khyber Pakhtunkhwa.",
+      "ground_truth_doc_ids": [
+        "doc-project-utility-external-works"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-utility-external-works-000"
+      ],
+      "expected_citations": [
+        "Project — Utility, Water Infrastructure & External Works"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-007",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "Who was the client authority for the road rehabilitation from Shabistan Cinema to Dalazak Road?",
+      "ground_truth_answer": "Communication & Works / Municipal Authorities.",
+      "ground_truth_doc_ids": [
+        "doc-project-road-repair-dalazak"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-road-repair-dalazak-000"
+      ],
+      "expected_citations": [
+        "Project — Road Repair & Rehabilitation"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-008",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What civil works were executed for the Swat Expressway Package 02?",
+      "ground_truth_answer": "Dual-carriageway asphaltic roadway construction, earthworks, sub-base, base course, bridge structures, and culverts under client authority.",
+      "ground_truth_doc_ids": [
+        "doc-project-road-repair-dalazak",
+        "doc-project-bridge-approach-works"
+      ],
+      "ground_truth_chunk_ids": [],
+      "expected_citations": [],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-009",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What documented experience does Elite have in both highway rehabilitation and RCC bridge structures?",
+      "ground_truth_answer": "Elite has documented experience in road repair and corridor widening (Dalazak Road, Garanga-Sher Killi, Pir Bala-Pir Kala) and reinforced cement concrete bridge structures including piers, abutments, RCC girders, and approach roads.",
+      "ground_truth_doc_ids": [
+        "doc-project-road-repair-dalazak",
+        "doc-project-bridge-approach-works"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-road-repair-dalazak-000",
+        "chk-project-bridge-approach-works-000"
+      ],
+      "expected_citations": [
+        "Project — Road Repair & Rehabilitation",
+        "Project — RCC Bridge & Approach Infrastructure Works"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PROJ-010",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What site development and external services does Elite Construction Company provide?",
+      "ground_truth_answer": "Rough and fine grading, perimeter boundary works, utility trenching, stormwater management, paving, and environmental site works.",
+      "ground_truth_doc_ids": [
+        "doc-service-site-development"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-service-site-development-000"
+      ],
+      "expected_citations": [
+        "Service — Site Development"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-EQUIP-001",
+      "category": "EQUIPMENT_FLEET",
+      "query": "What machinery and plant capabilities does Elite deploy for highway earthmoving and surfacing?",
+      "ground_truth_answer": "Elite maintains equipment for earthmoving, sub-base preparation, bituminous surfacing, compaction rollers, asphalt pavers, and transit concrete equipment across infrastructure projects.",
+      "ground_truth_doc_ids": [
+        "doc-equipment-fleet",
+        "doc-capabilities-overview"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-equipment-fleet-000",
+        "chk-capabilities-overview-000"
+      ],
+      "expected_citations": [
+        "Equipment & Plant Fleet — Elite Construction Company",
+        "Technical Capabilities — Elite Construction Company"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-EQUIP-002",
+      "category": "EQUIPMENT_FLEET",
+      "query": "What plant capabilities does Elite deploy for reinforced concrete and bridge structures?",
+      "ground_truth_answer": "Concrete batching, transit mixing, concrete pumps, vibrators, and formwork systems for structural RCC works, piers, abutments, and deck slabs.",
+      "ground_truth_doc_ids": [
+        "doc-equipment-fleet",
+        "doc-capabilities-overview"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-equipment-fleet-000",
+        "chk-capabilities-overview-000"
+      ],
+      "expected_citations": [
+        "Equipment & Plant Fleet — Elite Construction Company",
+        "Technical Capabilities — Elite Construction Company"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-EQUIP-003",
+      "category": "EQUIPMENT_FLEET",
+      "query": "Are Elite Construction Company's machinery and plant fleet active and maintained for operations?",
+      "ground_truth_answer": "Yes, equipment and machinery deployed across active sites are maintained in operational status for civil works execution.",
+      "ground_truth_doc_ids": [
+        "doc-equipment-fleet"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-equipment-fleet-000"
+      ],
+      "expected_citations": [
+        "Equipment & Plant Fleet — Elite Construction Company"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PERF-001",
+      "category": "PERFORMANCE_CERTIFICATES",
+      "query": "Under which government standards and departments has Elite documented field compliance?",
+      "ground_truth_answer": "Elite has documented field compliance under Military Engineering Services (MES), Communication & Works (C&W), and autonomous development authorities.",
+      "ground_truth_doc_ids": [
+        "doc-capabilities-overview",
+        "doc-client-organizations"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-capabilities-overview-000",
+        "chk-client-organizations-000"
+      ],
+      "expected_citations": [
+        "Technical Capabilities — Elite Construction Company",
+        "Client Organizations — Elite Construction Company"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PERF-002",
+      "category": "PERFORMANCE_CERTIFICATES",
+      "query": "What completion status is recorded for Elite's documented civil infrastructure projects?",
+      "ground_truth_answer": "Documented infrastructure projects including road repairs, building facilities, and bridge works are verified as COMPLETED.",
+      "ground_truth_doc_ids": [
+        "doc-project-road-repair-dalazak",
+        "doc-project-garanga-sher-killi-road",
+        "doc-project-bridge-approach-works"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-project-road-repair-dalazak-000",
+        "chk-project-garanga-sher-killi-road-000",
+        "chk-project-bridge-approach-works-000"
+      ],
+      "expected_citations": [
+        "Project — Road Repair & Rehabilitation",
+        "Project — Garanga–Sher Killi Road Improvement",
+        "Project — RCC Bridge & Approach Infrastructure Works"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-PERF-003",
+      "category": "PERFORMANCE_CERTIFICATES",
+      "query": "What quality control and technical supervision protocols does Elite adhere to during construction?",
+      "ground_truth_answer": "Adheres to engineering contracts, quality assurance protocols, site supervision, material testing, milestone tracking, and governmental compliance.",
+      "ground_truth_doc_ids": [
+        "doc-service-project-management",
+        "doc-capabilities-overview"
+      ],
+      "ground_truth_chunk_ids": [
+        "chk-service-project-management-000",
+        "chk-capabilities-overview-000"
+      ],
+      "expected_citations": [
+        "Service — Project Management",
+        "Technical Capabilities — Elite Construction Company"
+      ],
+      "expected_status": "SUPPORTED",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-NEG-001",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Has Elite Construction Company constructed any nuclear power facilities or submarine tunnels?",
+      "ground_truth_answer": "There is no evidence in the authorized knowledge base indicating that M/S Elite Construction Company has engaged in nuclear power facility or submarine tunnel construction.",
+      "ground_truth_doc_ids": [],
+      "ground_truth_chunk_ids": [],
+      "expected_citations": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-NEG-002",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Has Elite Construction Company engineered offshore deep-sea oil drilling platforms in the Arabian Sea?",
+      "ground_truth_answer": "There is no evidence in the authorized knowledge base indicating that M/S Elite Construction Company has engaged in offshore deep-sea oil drilling platform engineering.",
+      "ground_truth_doc_ids": [],
+      "ground_truth_chunk_ids": [],
+      "expected_citations": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-NEG-003",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Does Elite Construction Company manufacture high-speed magnetic levitation bullet train systems?",
+      "ground_truth_answer": "There is no evidence in the authorized knowledge base indicating that M/S Elite Construction Company manufactures magnetic levitation train systems.",
+      "ground_truth_doc_ids": [],
+      "ground_truth_chunk_ids": [],
+      "expected_citations": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "required_security_level": "PUBLIC"
+    },
+    {
+      "test_case_id": "TC-NEG-004",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Did Elite Construction Company build a commercial passenger airport terminal in Antarctica?",
+      "ground_truth_answer": "There is no evidence in the authorized knowledge base indicating that M/S Elite Construction Company built an airport terminal in Antarctica.",
+      "ground_truth_doc_ids": [],
+      "ground_truth_chunk_ids": [],
+      "expected_citations": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "required_security_level": "PUBLIC"
+    }
+  ]
+}

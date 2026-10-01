@@ -1,0 +1,615 @@
+{
+  "benchmark_version": "1.0.0",
+  "timestamp": "2026-10-01T04:17:15.422656+00:00",
+  "mode": "full",
+  "total_elapsed_seconds": 0.37,
+  "benchmark_metadata": {
+    "name": "ELITEBUILD Enterprise RAG Gold Evaluation Benchmark",
+    "version": "1.0.0",
+    "total_cases": 30,
+    "categories": {
+      "CORPORATE_CREDENTIALS": 10,
+      "CIVIL_INFRASTRUCTURE_PROJECTS": 10,
+      "EQUIPMENT_FLEET": 3,
+      "PERFORMANCE_CERTIFICATES": 3,
+      "NEGATIVE_CONTROL_OUT_OF_DOMAIN": 4
+    }
+  },
+  "retrieval_metrics": {
+    "recall@1": 0.7111,
+    "recall@3": 0.7778,
+    "recall@5": 0.8611,
+    "recall@10": 0.8611,
+    "precision@1": 0.6667,
+    "precision@3": 0.2556,
+    "precision@5": 0.18,
+    "precision@10": 0.09,
+    "mrr": 0.8361,
+    "ndcg@5": 1.4219,
+    "ndcg@10": 1.4538
+  },
+  "generation_metrics": {
+    "faithfulness": 0.3417,
+    "correctness_f1": 0.0678,
+    "hallucination_rate": 0.8
+  },
+  "status_metrics": {
+    "accuracy": 0.9,
+    "confusion_matrix": {
+      "SUPPORTED": {
+        "SUPPORTED": 23,
+        "PARTIALLY_SUPPORTED": 0,
+        "CONFLICTING_EVIDENCE": 0,
+        "INSUFFICIENT_EVIDENCE": 2
+      },
+      "PARTIALLY_SUPPORTED": {
+        "SUPPORTED": 1,
+        "PARTIALLY_SUPPORTED": 0,
+        "CONFLICTING_EVIDENCE": 0,
+        "INSUFFICIENT_EVIDENCE": 0
+      },
+      "CONFLICTING_EVIDENCE": {
+        "SUPPORTED": 0,
+        "PARTIALLY_SUPPORTED": 0,
+        "CONFLICTING_EVIDENCE": 0,
+        "INSUFFICIENT_EVIDENCE": 0
+      },
+      "INSUFFICIENT_EVIDENCE": {
+        "SUPPORTED": 0,
+        "PARTIALLY_SUPPORTED": 0,
+        "CONFLICTING_EVIDENCE": 0,
+        "INSUFFICIENT_EVIDENCE": 4
+      }
+    }
+  },
+  "citation_metrics": {
+    "total_citations": 65,
+    "traceability_rate": 1.0,
+    "fabricated_citations": 0,
+    "fabrication_rate": 0.0,
+    "completeness_rate": 1.0
+  },
+  "performance_metrics": {
+    "p50_latency_ms": 6.2,
+    "p95_latency_ms": 40.81,
+    "mean_retrieval_latency_ms": 5.31,
+    "mean_generation_latency_ms": 4.18,
+    "avg_input_tokens": 0.0,
+    "avg_output_tokens": 0.0,
+    "total_tokens": 0,
+    "cost_per_query_usd": "$0.0001",
+    "cache_status": "NOT IMPLEMENTED"
+  },
+  "security_metrics": {
+    "timestamp": 1790828235.4214432,
+    "tests": {
+      "tenant_isolation": {
+        "passed": true,
+        "total_candidates": 4,
+        "authorized_retrieved": 2,
+        "cross_tenant_leaks": 0,
+        "description": "Tenant A query strictly filtered to tenant_id = elitebuild-core"
+      },
+      "rbac_enforcement": {
+        "passed": true,
+        "subtests": {
+          "public_confinement": true,
+          "editor_confinement": true,
+          "admin_confinement": true,
+          "super_admin_complete": true,
+          "zero_trust_unknown_role": true
+        },
+        "role_matrix": {
+          "SUPER_ADMIN": [
+            "PUBLIC",
+            "AUTHENTICATED",
+            "EDITOR",
+            "ADMIN",
+            "PRIVATE"
+          ],
+          "ADMIN": [
+            "PUBLIC",
+            "AUTHENTICATED",
+            "EDITOR",
+            "ADMIN"
+          ],
+          "EDITOR": [
+            "PUBLIC",
+            "AUTHENTICATED",
+            "EDITOR"
+          ],
+          "PUBLIC": [
+            "PUBLIC"
+          ]
+        }
+      },
+      "unauthorized_leakage": {
+        "passed": true,
+        "leaked_private_chunks": 0,
+        "retained_public_chunks": 1
+      },
+      "prompt_injection_resistance": {
+        "passed": true,
+        "rule_6_enforced": true,
+        "evidence_boundary_enforced": true,
+        "tested_payloads_count": 4
+      },
+      "citation_security": {
+        "passed": true,
+        "invalid_citations_detected": [
+          99
+        ],
+        "valid_citations_retained": []
+      }
+    },
+    "all_passed": true
+  },
+  "error_analysis": [
+    {
+      "test_case_id": "TC-CORP-001",
+      "query": "What is the official legal name and established year of the company?",
+      "failure_type": "RETRIEVAL_MISS",
+      "expected": [
+        "doc-company-profile"
+      ],
+      "actual": [],
+      "cause": "Ground-truth documents not ranked in top 5"
+    },
+    {
+      "test_case_id": "TC-CORP-001",
+      "query": "What is the official legal name and established year of the company?",
+      "failure_type": "STATUS_CLASSIFICATION_ERROR",
+      "expected": "SUPPORTED",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "cause": "System assessed status as INSUFFICIENT_EVIDENCE instead of SUPPORTED"
+    },
+    {
+      "test_case_id": "TC-CORP-003",
+      "query": "Where are the primary and secondary registered offices of Elite Construction Company located?",
+      "failure_type": "RETRIEVAL_MISS",
+      "expected": [
+        "doc-company-profile"
+      ],
+      "actual": [],
+      "cause": "Ground-truth documents not ranked in top 5"
+    },
+    {
+      "test_case_id": "TC-CORP-003",
+      "query": "Where are the primary and secondary registered offices of Elite Construction Company located?",
+      "failure_type": "STATUS_CLASSIFICATION_ERROR",
+      "expected": "SUPPORTED",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "cause": "System assessed status as INSUFFICIENT_EVIDENCE instead of SUPPORTED"
+    },
+    {
+      "test_case_id": "TC-PROJ-008",
+      "query": "What civil works were executed for the Swat Expressway Package 02?",
+      "failure_type": "STATUS_CLASSIFICATION_ERROR",
+      "expected": "PARTIALLY_SUPPORTED",
+      "actual": "SUPPORTED",
+      "cause": "System assessed status as SUPPORTED instead of PARTIALLY_SUPPORTED"
+    }
+  ],
+  "per_case_results": [
+    {
+      "test_case_id": "TC-CORP-001",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the official legal name and established year of the company?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "INSUFFICIENT_EVIDENCE",
+      "recall@5": 0.0,
+      "precision@5": 0.0,
+      "mrr": 0.0,
+      "faithfulness": 1.0,
+      "correctness_f1": 0.0645,
+      "citations_count": 0,
+      "latency_ms": 4.49
+    },
+    {
+      "test_case_id": "TC-CORP-002",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What Pakistan Engineering Council (PEC) licensing category does Elite Construction Company hold?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0984,
+      "citations_count": 4,
+      "latency_ms": 8.14
+    },
+    {
+      "test_case_id": "TC-CORP-003",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "Where are the primary and secondary registered offices of Elite Construction Company located?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "INSUFFICIENT_EVIDENCE",
+      "recall@5": 0.0,
+      "precision@5": 0.0,
+      "mrr": 0.0,
+      "faithfulness": 1.0,
+      "correctness_f1": 0.0513,
+      "citations_count": 0,
+      "latency_ms": 5.3
+    },
+    {
+      "test_case_id": "TC-CORP-004",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the mission of Elite Construction Company?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.026,
+      "citations_count": 1,
+      "latency_ms": 5.05
+    },
+    {
+      "test_case_id": "TC-CORP-005",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What is the corporate vision of Elite Construction Company?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.0278,
+      "citations_count": 1,
+      "latency_ms": 4.56
+    },
+    {
+      "test_case_id": "TC-CORP-006",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What government enlistment does Elite Construction Company hold with the Communication & Works Department?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.1077,
+      "citations_count": 5,
+      "latency_ms": 5.21
+    },
+    {
+      "test_case_id": "TC-CORP-007",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "Which institutional client bodies and government departments has Elite Construction Company worked with?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 0.25,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0488,
+      "citations_count": 4,
+      "latency_ms": 7.74
+    },
+    {
+      "test_case_id": "TC-CORP-008",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What capabilities and scope are included in Elite's Civil Construction service?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0588,
+      "citations_count": 5,
+      "latency_ms": 55.81
+    },
+    {
+      "test_case_id": "TC-CORP-009",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What does Elite Construction Company offer under Rehabilitation and Maintenance services?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 0.3333,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0357,
+      "citations_count": 5,
+      "latency_ms": 22.47
+    },
+    {
+      "test_case_id": "TC-CORP-010",
+      "category": "CORPORATE_CREDENTIALS",
+      "query": "What project management services does Elite Construction Company provide?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0408,
+      "citations_count": 5,
+      "latency_ms": 6.4
+    },
+    {
+      "test_case_id": "TC-PROJ-001",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What works were executed for the Dalazak Road repair and rehabilitation project in Peshawar?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0855,
+      "citations_count": 5,
+      "latency_ms": 116.99
+    },
+    {
+      "test_case_id": "TC-PROJ-002",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What was the scope of the Garanga to Sher Killi road improvement project?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0794,
+      "citations_count": 5,
+      "latency_ms": 6.22
+    },
+    {
+      "test_case_id": "TC-PROJ-003",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "Under which program was the Pir Bala to Pir Kala road rehabilitation carried out?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0704,
+      "citations_count": 5,
+      "latency_ms": 7.37
+    },
+    {
+      "test_case_id": "TC-PROJ-004",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What types of educational and institutional buildings has Elite constructed?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0,
+      "citations_count": 5,
+      "latency_ms": 6.13
+    },
+    {
+      "test_case_id": "TC-PROJ-005",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What works were executed for the RCC Bridge and Approach Infrastructure project?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.064,
+      "citations_count": 5,
+      "latency_ms": 6.79
+    },
+    {
+      "test_case_id": "TC-PROJ-006",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What civil and external works were undertaken for the Utility and Water Infrastructure project?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.05,
+      "citations_count": 5,
+      "latency_ms": 5.34
+    },
+    {
+      "test_case_id": "TC-PROJ-007",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "Who was the client authority for the road rehabilitation from Shabistan Cinema to Dalazak Road?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0,
+      "citations_count": 5,
+      "latency_ms": 6.19
+    },
+    {
+      "test_case_id": "TC-PROJ-008",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What civil works were executed for the Swat Expressway Package 02?",
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 0.5,
+      "precision@5": 0.2,
+      "mrr": 0.25,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.0357,
+      "citations_count": 5,
+      "latency_ms": 6.72
+    },
+    {
+      "test_case_id": "TC-PROJ-009",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What documented experience does Elite have in both highway rehabilitation and RCC bridge structures?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 0.5,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.0938,
+      "citations_count": 5,
+      "latency_ms": 5.32
+    },
+    {
+      "test_case_id": "TC-PROJ-010",
+      "category": "CIVIL_INFRASTRUCTURE_PROJECTS",
+      "query": "What site development and external services does Elite Construction Company provide?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0777,
+      "citations_count": 5,
+      "latency_ms": 4.48
+    },
+    {
+      "test_case_id": "TC-EQUIP-001",
+      "category": "EQUIPMENT_FLEET",
+      "query": "What machinery and plant capabilities does Elite deploy for highway earthmoving and surfacing?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.4,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.1081,
+      "citations_count": 5,
+      "latency_ms": 7.09
+    },
+    {
+      "test_case_id": "TC-EQUIP-002",
+      "category": "EQUIPMENT_FLEET",
+      "query": "What plant capabilities does Elite deploy for reinforced concrete and bridge structures?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.4,
+      "mrr": 0.25,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.0348,
+      "citations_count": 5,
+      "latency_ms": 6.29
+    },
+    {
+      "test_case_id": "TC-EQUIP-003",
+      "category": "EQUIPMENT_FLEET",
+      "query": "Are Elite Construction Company's machinery and plant fleet active and maintained for operations?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0708,
+      "citations_count": 5,
+      "latency_ms": 8.02
+    },
+    {
+      "test_case_id": "TC-PERF-001",
+      "category": "PERFORMANCE_CERTIFICATES",
+      "query": "Under which government standards and departments has Elite documented field compliance?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 0.5,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.029,
+      "citations_count": 1,
+      "latency_ms": 6.48
+    },
+    {
+      "test_case_id": "TC-PERF-002",
+      "category": "PERFORMANCE_CERTIFICATES",
+      "query": "What completion status is recorded for Elite's documented civil infrastructure projects?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 0.3333,
+      "precision@5": 0.2,
+      "mrr": 1.0,
+      "faithfulness": 0.25,
+      "correctness_f1": 0.0545,
+      "citations_count": 5,
+      "latency_ms": 7.12
+    },
+    {
+      "test_case_id": "TC-PERF-003",
+      "category": "PERFORMANCE_CERTIFICATES",
+      "query": "What quality control and technical supervision protocols does Elite adhere to during construction?",
+      "expected_status": "SUPPORTED",
+      "predicted_status": "SUPPORTED",
+      "recall@5": 1.0,
+      "precision@5": 0.4,
+      "mrr": 1.0,
+      "faithfulness": 0.0,
+      "correctness_f1": 0.0,
+      "citations_count": 2,
+      "latency_ms": 5.99
+    },
+    {
+      "test_case_id": "TC-NEG-001",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Has Elite Construction Company constructed any nuclear power facilities or submarine tunnels?",
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "predicted_status": "INSUFFICIENT_EVIDENCE",
+      "recall@5": 1.0,
+      "precision@5": 0.0,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "correctness_f1": 0.1463,
+      "citations_count": 0,
+      "latency_ms": 4.27
+    },
+    {
+      "test_case_id": "TC-NEG-002",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Has Elite Construction Company engineered offshore deep-sea oil drilling platforms in the Arabian Sea?",
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "predicted_status": "INSUFFICIENT_EVIDENCE",
+      "recall@5": 1.0,
+      "precision@5": 0.0,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "correctness_f1": 0.1463,
+      "citations_count": 0,
+      "latency_ms": 4.37
+    },
+    {
+      "test_case_id": "TC-NEG-003",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Does Elite Construction Company manufacture high-speed magnetic levitation bullet train systems?",
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "predicted_status": "INSUFFICIENT_EVIDENCE",
+      "recall@5": 1.0,
+      "precision@5": 0.0,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "correctness_f1": 0.1667,
+      "citations_count": 0,
+      "latency_ms": 5.99
+    },
+    {
+      "test_case_id": "TC-NEG-004",
+      "category": "NEGATIVE_CONTROL_OUT_OF_DOMAIN",
+      "query": "Did Elite Construction Company build a commercial passenger airport terminal in Antarctica?",
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "predicted_status": "INSUFFICIENT_EVIDENCE",
+      "recall@5": 1.0,
+      "precision@5": 0.0,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "correctness_f1": 0.1622,
+      "citations_count": 0,
+      "latency_ms": 4.27
+    }
+  ]
+}

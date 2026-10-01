@@ -126,11 +126,11 @@ class OpenAILLMProvider(LLMProvider):
         max_tokens: int = 2000,
         timeout_seconds: int = 30,
     ) -> LLMResponse:
-        client = self._get_client()
         start = time.time()
 
         for attempt in range(self.max_retries):
             try:
+                client = self._get_client()
                 response = client.chat.completions.create(
                     model=self.model,
                     messages=[
@@ -169,6 +169,17 @@ class OpenAILLMProvider(LLMProvider):
                 return result
 
             except Exception as e:
+                error_str = str(e)
+                if isinstance(e, (ValueError, ImportError)) or "api_key" in error_str.lower():
+                    elapsed_ms = (time.time() - start) * 1000
+                    logger.error(f"LLM generation failed: {e}")
+                    return LLMResponse(
+                        text="",
+                        model=self.model,
+                        latency_ms=elapsed_ms,
+                        finish_reason="error",
+                        error=error_str,
+                    )
                 if attempt < self.max_retries - 1:
                     wait = 2 ** attempt
                     logger.warning(

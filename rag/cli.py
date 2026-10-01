@@ -144,6 +144,17 @@ def cmd_serve(args):
     uvicorn.run("rag.api.app:app", host=host, port=port, reload=True)
 
 
+def cmd_eval(args):
+    """Run RAG benchmark evaluation suite."""
+    from rag.evaluation.runner import BenchmarkRunner
+    runner = BenchmarkRunner(benchmark_path=args.benchmark, output_dir=args.output)
+    print(f"🚀 Running ELITEBUILD RAG Evaluation Benchmark [Mode: {args.mode.upper()}]...")
+    results = runner.run_benchmark(mode=args.mode, case_id=args.case_id)
+    report = runner.reporter.generate_markdown_report(results)
+    print("\n" + report)
+    print(f"\n💾 Machine-readable results saved to: {results['artifact_file']}\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="rag",
@@ -171,6 +182,13 @@ def main():
     serve_parser.add_argument("--host", default="127.0.0.1")
     serve_parser.add_argument("--port", type=int, default=8000)
 
+    # eval
+    eval_parser = subparsers.add_parser("eval", help="Run RAG benchmark evaluation suite")
+    eval_parser.add_argument("--mode", choices=["full", "retrieval", "generation", "security"], default="full", help="Evaluation mode")
+    eval_parser.add_argument("--case-id", type=str, default=None, help="Specific test case ID")
+    eval_parser.add_argument("--benchmark", type=str, default=None, help="Custom benchmark path")
+    eval_parser.add_argument("--output", type=str, default=None, help="Custom results output path")
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -183,6 +201,8 @@ def main():
         cmd_retrieve(args)
     elif args.command == "serve":
         cmd_serve(args)
+    elif args.command == "eval":
+        cmd_eval(args)
     else:
         parser.print_help()
         sys.exit(1)

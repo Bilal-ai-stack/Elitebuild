@@ -109,7 +109,8 @@ class EvidenceAssessor:
         # Check evidence quality
         high_quality_count = sum(
             1 for b in evidence_blocks
-            if b.score >= self.min_score_threshold
+            if (b.reranker_score is not None and b.reranker_score >= self.min_score_threshold)
+            or (b.reranker_score is None and (b.score >= self.min_score_threshold or b.score >= 0.005))
         )
 
         if high_quality_count == 0:
