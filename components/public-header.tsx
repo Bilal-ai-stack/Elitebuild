@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { HardHat, Menu, X, ArrowRight, Phone } from 'lucide-react'
+import { HardHat, Menu, X, ArrowRight, Phone, Search } from 'lucide-react'
 import { createWhatsAppLink, isWhatsAppConfigured } from '@/lib/services/whatsapp'
+import { KnowledgeSearchModal } from '@/components/rag/knowledge-search-modal'
 
 interface PublicHeaderProps {
   company?: {
@@ -16,6 +17,7 @@ interface PublicHeaderProps {
 
 export function PublicHeader({ company }: PublicHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
 
   const navLinks = [
@@ -70,7 +72,15 @@ export function PublicHeader({ company }: PublicHeaderProps) {
         </nav>
 
         {/* Action Buttons */}
-        <div className="hidden items-center gap-4 sm:flex">
+        <div className="hidden items-center gap-3 sm:flex">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="inline-flex items-center gap-1.5 border border-[#315d7a]/30 bg-[#315d7a]/10 px-3 py-2 text-xs font-semibold text-[#315d7a] transition hover:bg-[#315d7a] hover:text-white"
+            aria-label="Search verified company records"
+          >
+            <Search className="h-3.5 w-3.5" /> Search Records
+          </button>
           {hasWhatsApp && (
             <a
               href={whatsappUrl}
@@ -123,6 +133,16 @@ export function PublicHeader({ company }: PublicHeaderProps) {
           </div>
 
           <div className="mt-6 flex flex-col gap-3 border-t border-[#e4e8eb] pt-5">
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false)
+                setSearchOpen(true)
+              }}
+              className="flex items-center justify-center gap-2 border border-[#315d7a] bg-[#315d7a]/10 py-2.5 text-xs font-semibold text-[#315d7a]"
+            >
+              <Search className="h-4 w-4" /> Search Verified Records
+            </button>
             {hasWhatsApp && (
               <a
                 href={whatsappUrl}
@@ -144,6 +164,9 @@ export function PublicHeader({ company }: PublicHeaderProps) {
           </div>
         </nav>
       )}
+
+      {/* Verified Knowledge Search Modal */}
+      <KnowledgeSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   )
 }

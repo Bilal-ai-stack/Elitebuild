@@ -48,6 +48,7 @@ from rag.retrieval.engine import (
     get_reranker,
     reciprocal_rank_fusion,
 )
+from rag.observability import RAGTrace, trace_store
 
 
 # ---------------------------------------------------------------------------
@@ -525,6 +526,7 @@ class BenchmarkRunner:
             case_id: Optional single test case to evaluate
         """
         run_start = time.time()
+        evaluation_run_id = f"eval-run-{int(run_start)}-{os.urandom(4).hex()}"
         benchmark_data = self.load_benchmark()
         test_cases = benchmark_data.get("test_cases", [])
 
@@ -570,15 +572,23 @@ class BenchmarkRunner:
                 req_role = tc.get("required_security_level", "PUBLIC")
 
                 t_start = time.time()
+                case_trace = RAGTrace(
+                    user_role=req_role,
+                    evaluation_run_id=evaluation_run_id,
+                    test_case_id=tc_id,
+                )
+                case_trace.query_preview = query[:120]
 
                 # 1. Retrieval Execution
-                t_ret = time.time()
-                retrieved_results = self.retrieval_engine.retrieve(
-                    query=query,
-                    user_role=req_role,
-                    final_top_k=10,
-                )
-                ret_elapsed = (time.time() - t_ret) * 1000
+                with case_trace.span("eval.retrieval", attributes={"query": query[:120], "user_role": req_role}) as ret_span:
+                    t_ret = time.time()
+                    retrieved_results = self.retrieval_engine.retrieve(
+                        query=query,
+                        user_role=req_role,
+                        final_top_k=10,
+                    )
+                    ret_elapsed = (time.time() - t_ret) * 1000
+                    ret_span.set_attribute("candidate_count", len(retrieved_results))
                 retrieval_latencies.append(ret_elapsed)
 
                 retrieved_doc_ids = [r.document_id for r in retrieved_results]
@@ -628,13 +638,17 @@ class BenchmarkRunner:
                 gen_elapsed = 0.0
 
                 if mode in ("full", "generation"):
-                    t_gen = time.time()
-                    gen_result = self.generator.generate(
-                        query=query,
-                        retrieval_results=retrieved_results[:5],
-                        user_role=req_role,
-                    )
-                    gen_elapsed = (time.time() - t_gen) * 1000
+                    with case_trace.span("eval.generation") as gen_span:
+                        t_gen = time.time()
+                        gen_result = self.generator.generate(
+                            query=query,
+                            retrieval_results=retrieved_results[:5],
+                            user_role=req_role,
+                        )
+                        gen_elapsed = (time.time() - t_gen) * 1000
+                        gen_span.set_attribute("status", gen_result.status)
+                        gen_span.set_attribute("input_tokens", gen_result.input_tokens)
+                        gen_span.set_attribute("output_tokens", gen_result.output_tokens)
                     generation_latencies.append(gen_elapsed)
 
                     gen_answer = gen_result.answer
@@ -642,6 +656,15 @@ class BenchmarkRunner:
                     citations_list = gen_result.citations
                     input_token_counts.append(gen_result.input_tokens)
                     output_token_counts.append(gen_result.output_tokens)
+
+                    case_trace.set_generation_meta(
+                        model=getattr(gen_result, "model", "mock-llm"),
+                        provider=getattr(gen_result, "provider", "local"),
+                        input_tokens=gen_result.input_tokens,
+                        output_tokens=gen_result.output_tokens,
+                        generation_latency_ms=gen_elapsed,
+                        generation_status=pred_status,
+                    )
 
                     # Generation metrics
                     context_str = " ".join(r.chunk_text for r in retrieved_results[:5])
@@ -679,8 +702,13 @@ class BenchmarkRunner:
                 total_elapsed = (time.time() - t_start) * 1000
                 latencies_ms.append(total_elapsed)
 
+                case_trace.end_trace(status="SUCCESS")
+                trace_store.record_trace(case_trace)
+
                 per_case_results.append({
                     "test_case_id": tc_id,
+                    "trace_id": case_trace.trace_id,
+                    "evaluation_run_id": evaluation_run_id,
                     "category": tc.get("category"),
                     "query": query,
                     "expected_status": exp_status,
@@ -758,6 +786,7 @@ class BenchmarkRunner:
         }
 
         run_output = {
+            "evaluation_run_id": evaluation_run_id,
             "benchmark_version": benchmark_data.get("version", "1.0.0"),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "mode": mode,

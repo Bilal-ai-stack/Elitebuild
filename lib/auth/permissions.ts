@@ -24,3 +24,7 @@ export function canManageDocuments(role: UserRole): boolean {
 export function canViewAuditLogs(role: UserRole): boolean {
   return role === 'SUPER_ADMIN'
 }
+
+export function canViewRagMonitoring(role: UserRole): boolean {
+  return ['SUPER_ADMIN', 'ADMIN'].includes(role)
+}

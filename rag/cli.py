@@ -155,6 +155,96 @@ def cmd_eval(args):
     print(f"\n💾 Machine-readable results saved to: {results['artifact_file']}\n")
 
 
+def cmd_metrics(args):
+    """Inspect aggregated RAG telemetry metrics."""
+    from rag.observability import trace_store
+    metrics = trace_store.get_aggregated_metrics()
+    print("\n📊 ELITEBUILD RAG Observability — Aggregated Metrics")
+    print(json.dumps(metrics, indent=2))
+
+
+def cmd_trace(args):
+    """Inspect an individual RAG trace by ID."""
+    from rag.observability import trace_store
+    trace = trace_store.get_trace(args.trace_id)
+    if not trace:
+        print(f"\n[WARN] Trace ID '{args.trace_id}' not found in telemetry store.")
+        sys.exit(1)
+    print(f"\n[TRACE] Trace Details [{args.trace_id}]")
+    print(json.dumps(trace.to_dict(), indent=2))
+
+
+def cmd_health(args):
+    """Inspect RAG subsystem health status."""
+    from rag.observability import check_rag_health
+    report = check_rag_health()
+    status_icon = "[OK]" if report["status"] == "HEALTHY" else ("[WARN]" if report["status"] == "DEGRADED" else "[FAIL]")
+    print(f"\n{status_icon} RAG Health Status: {report['status']}")
+    print(json.dumps(report, indent=2))
+
+
+def cmd_compare(args):
+    """Compare two evaluation runs to detect quality regressions."""
+    from rag.observability.quality_monitor import QualityRegressionDetector
+    detector = QualityRegressionDetector()
+    try:
+        report = detector.compare_from_files(args.baseline, args.candidate)
+        print("\n--- Quality Regression Report ---")
+        status_icon = "[FAIL]" if report["regression_detected"] else "[OK]"
+        print(f"{status_icon} Regression Detected: {report['regression_detected']}")
+        print(f"Summary: {report['summary']}")
+        if report["regressions"]:
+            print("\n[!] Regressions:")
+            for r in report["regressions"]:
+                print(f"   - [{r['severity']}] {r['metric']}: {r['baseline']} -> {r['candidate']} ({r['relative_change']})")
+        if report["improvements"]:
+            print("\n[+] Improvements:")
+            for imp in report["improvements"]:
+                print(f"   + {imp['metric']}: {imp['baseline']} -> {imp['candidate']} ({imp['relative_change']})")
+    except Exception as e:
+        print(f"Error comparing runs: {e}")
+        sys.exit(1)
+
+
+def cmd_report(args):
+    """Generate and print machine-readable operational report."""
+    from rag.observability.operational_report import generate_operational_report
+    report = generate_operational_report()
+    if getattr(args, "json", False):
+        print(json.dumps(report, indent=2))
+    else:
+        print("\n=======================================================")
+        print("ELITEBUILD RAG — Operational Readiness & Health Report")
+        print("=======================================================")
+        print(f"Service Status:       {report['service_status']}")
+        print(f"Environment:          {report['environment']}")
+        print(f"Quality Gate Status:  {report['quality_gate_status']}")
+        print(f"Regression Status:    {report['regression_status']}")
+        print(f"Active Alerts:        {report['alert_summary']['total_alerts']} ({report['alert_summary']['critical']} critical)")
+        print("\nComponents:")
+        for comp, status in report['component_status'].items():
+            print(f"  - {comp:22}: {status}")
+        print("\nQuality Gate Categories:")
+        for cat, status in report['quality_gate_summary'].items():
+            print(f"  - {cat:22}: {status}")
+        print("=======================================================\n")
+
+
+def cmd_gates(args):
+    """Evaluate production quality gates against latest evaluation run."""
+    from rag.observability.quality_gates import QualityGateEngine
+    engine = QualityGateEngine()
+    res = engine.evaluate_run()
+    print("\n--- Production Quality Gates ---")
+    print(f"Overall Status: {res['overall_status']}")
+    print(f"Benchmark:      {res['evaluation_metadata']['benchmark_version'] if res.get('evaluation_metadata') else 'NONE'}")
+    print("\nRules:")
+    for r in res.get("rule_evaluations", []):
+        icon = "[PASS]" if r["status"] == "PASSED" else ("[FAIL]" if r["status"] == "FAILED" else "[--]")
+        print(f"  {icon} {r['rule']:24} ({r['category']}): {r['actual']} (threshold: {r['operator']} {r['threshold']})")
+    print("--------------------------------\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="rag",
@@ -189,6 +279,28 @@ def main():
     eval_parser.add_argument("--benchmark", type=str, default=None, help="Custom benchmark path")
     eval_parser.add_argument("--output", type=str, default=None, help="Custom results output path")
 
+    # metrics
+    subparsers.add_parser("metrics", help="Display aggregated RAG telemetry and metrics")
+
+    # trace
+    trace_parser = subparsers.add_parser("trace", help="Inspect a specific trace by ID")
+    trace_parser.add_argument("trace_id", help="Trace identifier")
+
+    # health
+    subparsers.add_parser("health", help="Check component health status")
+
+    # compare
+    compare_parser = subparsers.add_parser("compare", help="Compare two evaluation runs")
+    compare_parser.add_argument("--baseline", required=True, help="Baseline JSON run file")
+    compare_parser.add_argument("--candidate", required=True, help="Candidate JSON run file")
+
+    # report
+    report_parser = subparsers.add_parser("report", help="Generate machine-readable operational report")
+    report_parser.add_argument("--json", action="store_true", help="Output raw JSON")
+
+    # gates
+    subparsers.add_parser("gates", help="Evaluate production quality gates")
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -203,6 +315,18 @@ def main():
         cmd_serve(args)
     elif args.command == "eval":
         cmd_eval(args)
+    elif args.command == "metrics":
+        cmd_metrics(args)
+    elif args.command == "trace":
+        cmd_trace(args)
+    elif args.command == "health":
+        cmd_health(args)
+    elif args.command == "compare":
+        cmd_compare(args)
+    elif args.command == "report":
+        cmd_report(args)
+    elif args.command == "gates":
+        cmd_gates(args)
     else:
         parser.print_help()
         sys.exit(1)
@@ -210,3 +334,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

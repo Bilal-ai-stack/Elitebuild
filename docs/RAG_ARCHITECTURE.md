@@ -321,4 +321,4 @@ Every request generates a structured, append-only JSON telemetry entry.
 | **Embedding Model** | Provider-Agnostic (e.g., OpenAI `text-embedding-3-small` / BGE-large) | Balanced dimensionality (1536), low latency, and cost efficiency. Configured via environment variables. |
 | **Reranker Model** | `BAAI/bge-reranker-base` or cross-encoder API | Proven benchmark performance in multi-lingual and technical document domain. |
 | **Evaluation Suite** | Ragas + DeepEval | Industry standard for reference-free and reference-based RAG metric benchmarking. |
-| **Observability** | Structured JSON Logging (OpenTelemetry compatible) | Lightweight, zero-dependency overhead, portable to LangSmith, Arize Phoenix, or Datadog. |
+| **Observability** | Structured JSON Logging (OpenTelemetry compatible) | Lightweight, zero-dependency overhead, portable to LangSmith, Arize Phoenix, or Datadog. Documented in [docs/RAG_OBSERVABILITY.md](file:///c:/Users/Bilal%20ahmad/OneDrive/Desktop/Elitebuild/docs/RAG_OBSERVABILITY.md). |

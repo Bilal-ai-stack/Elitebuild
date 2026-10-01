@@ -77,6 +77,8 @@ class RAGSettings(BaseSettings):
     # Telemetry & Observability
     # -------------------------------------------------------------------------
     enable_detailed_telemetry: bool = True
+    trace_enabled: bool = True
+    trace_retention_max_items: int = 1000
     log_level: str = "INFO"
     mask_pii_in_logs: bool = True
 

@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Building2, Wrench, FolderKanban, Shield, Truck,
   Award, HelpCircle, FileText, MessageSquare, Users, Settings,
   ClipboardList, LogOut, HardHat, ChevronDown, Menu, X, Zap,
-  UserCheck, Briefcase, FileCheck2
+  UserCheck, Briefcase, FileCheck2, Activity
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -54,6 +54,7 @@ const navGroups = [
       { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
       { label: 'Audit Logs', href: '/admin/audit-logs', icon: ClipboardList },
+      { label: 'RAG Monitoring', href: '/admin/rag-monitoring', icon: Activity, adminOnly: true },
     ],
   },
 ]
@@ -89,24 +90,31 @@ export function AdminSidebar({ user }: SidebarProps) {
             <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#9aa3ab]">
               {group.label}
             </p>
-            {group.items.map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`mb-0.5 flex items-center gap-3 rounded px-3 py-2 text-sm transition ${
-                    isActive
-                      ? 'bg-[#315d7a]/10 font-semibold text-[#315d7a]'
-                      : 'text-[#5e6873] hover:bg-[#f1f3f5] hover:text-[#17212b]'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {item.label}
-                </Link>
-              )
-            })}
+            {group.items
+              .filter((item) => {
+                if ('adminOnly' in item && (item as { adminOnly?: boolean }).adminOnly) {
+                  return ['SUPER_ADMIN', 'ADMIN'].includes(user.role)
+                }
+                return true
+              })
+              .map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`mb-0.5 flex items-center gap-3 rounded px-3 py-2 text-sm transition ${
+                      isActive
+                        ? 'bg-[#315d7a]/10 font-semibold text-[#315d7a]'
+                        : 'text-[#5e6873] hover:bg-[#f1f3f5] hover:text-[#17212b]'
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                )
+              })}
           </div>
         ))}
       </nav>
