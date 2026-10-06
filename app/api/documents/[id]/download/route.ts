@@ -16,7 +16,7 @@ import { Readable } from 'stream'
 import path from 'path'
 import prisma from '@/lib/db/prisma'
 import { getApiSession, canManageDocuments } from '@/lib/auth/session'
-import { resolveSecureDocumentPath } from '@/lib/storage'
+import { getSecureDocumentStream } from '@/lib/storage'
 import { createAuditLog } from '@/lib/services/audit'
 
 export const dynamic = 'force-dynamic'
@@ -78,25 +78,16 @@ export async function GET(
       }
     }
 
-    // 3. Resolve secure physical file path
-    const filePath = await resolveSecureDocumentPath(doc.fileUrl)
-    if (!filePath) {
+    // 3. Resolve secure stream (Cloudflare R2 / S3 or local disk fallback)
+    const docStreamResult = await getSecureDocumentStream(doc.fileUrl)
+    if (!docStreamResult) {
       return new Response(JSON.stringify({ error: { message: 'Document file not found on storage' } }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    // 4. File metadata and sanity check
-    const fileStat = await stat(filePath)
-    if (!fileStat.isFile()) {
-      return new Response(JSON.stringify({ error: { message: 'Requested path is not a file' } }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    // 5. Audit log download event for authenticated sessions
+    // 4. Audit log download event for authenticated sessions
     if (session) {
       createAuditLog({
         userId: session.userId,
@@ -106,13 +97,13 @@ export async function GET(
         metadata: {
           title: doc.title,
           visibility: doc.visibility,
-          fileSize: fileStat.size,
+          fileSize: docStreamResult.size,
         },
       }).catch(() => {})
     }
 
-    // 6. Safe filename for download header
-    const fileExt = path.extname(filePath) || ''
+    // 5. Safe filename for download header
+    const fileExt = path.extname(doc.fileUrl) || ''
     const sanitizedTitle = doc.title
       .replace(/[^a-zA-Z0-9_\-\. ]/g, '_')
       .trim()
@@ -121,17 +112,13 @@ export async function GET(
       ? sanitizedTitle
       : `${sanitizedTitle}${fileExt}`
 
-    // 7. Stream file
-    const nodeStream = fs.createReadStream(filePath)
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>
+    const mimeType = doc.mimeType || docStreamResult.mimeType || 'application/octet-stream'
 
-    const mimeType = doc.mimeType || 'application/octet-stream'
-
-    return new Response(webStream, {
+    return new Response(docStreamResult.stream, {
       status: 200,
       headers: {
         'Content-Type': mimeType,
-        'Content-Length': fileStat.size.toString(),
+        'Content-Length': docStreamResult.size.toString(),
         'Content-Disposition': `attachment; filename="${downloadFileName}"; filename*=UTF-8''${encodeURIComponent(downloadFileName)}`,
         'Cache-Control': 'private, no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -139,6 +126,7 @@ export async function GET(
         'X-Content-Type-Options': 'nosniff',
       },
     })
+
   } catch (error) {
     console.error('Document download failure:', error)
     return new Response(JSON.stringify({ error: { message: 'An unexpected error occurred while retrieving the document' } }), {

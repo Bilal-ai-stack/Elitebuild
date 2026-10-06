@@ -179,12 +179,15 @@ class RAGTrace:
         }
 
     @contextmanager
-    def span(self, name: str) -> Generator[Span, None, None]:
+    def span(self, name: str, attributes: Optional[Dict[str, Any]] = None) -> Generator[Span, None, None]:
         """
         Context manager to create, track, and automatically finish a child span.
         """
         parent_id = self._active_span.span_id if self._active_span else None
         span = Span(name=name, parent_span_id=parent_id)
+        if attributes:
+            for k, v in attributes.items():
+                span.set_attribute(k, v)
         prev_active = self._active_span
         self._active_span = span
         self.spans.append(span)
@@ -223,6 +226,24 @@ class RAGTrace:
         }
         self.errors.append(error_entry)
 
+    def set_generation_meta(
+        self,
+        model: str = "",
+        provider: str = "",
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        generation_latency_ms: float = 0.0,
+        generation_status: str = "SUPPORTED",
+    ) -> None:
+        """Record generation metadata in trace metrics."""
+        self.metrics["input_tokens"] = input_tokens
+        self.metrics["output_tokens"] = output_tokens
+        self.metrics["total_tokens"] = input_tokens + output_tokens
+        self.metrics["generation_latency_ms"] = generation_latency_ms
+        self.metrics["evidence_status"] = generation_status
+        self.metrics["model"] = model
+        self.metrics["provider"] = provider
+
     def finish(self, status: Optional[str] = None) -> None:
         """Finish the trace and calculate final elapsed time."""
         if self.end_time is None:
@@ -234,6 +255,10 @@ class RAGTrace:
             self.status = status
         elif self.errors and self.status == "SUCCESS":
             self.status = "FAILED"
+
+    def end_trace(self, status: Optional[str] = None) -> None:
+        """Alias for finish() for backward compatibility."""
+        self.finish(status=status)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize trace into structured, safe dictionary."""

@@ -184,6 +184,97 @@ class MockEmbeddingProvider(EmbeddingProvider):
 
 
 # ---------------------------------------------------------------------------
+# SentenceTransformers Local / Open-Source Embedding Provider (100% Free)
+# ---------------------------------------------------------------------------
+
+class SentenceTransformerEmbeddingProvider(EmbeddingProvider):
+    """
+    Local, open-source embedding provider using sentence-transformers.
+    100% free with no recurring API usage costs.
+    Compatible with HuggingFace models such as:
+      - 'all-MiniLM-L6-v2' (384-dim, ~90MB, fast, low memory footprint)
+      - 'BAAI/bge-small-en-v1.5' (384-dim, ~133MB, high accuracy)
+      - 'BAAI/bge-base-en-v1.5' (768-dim, ~438MB)
+    Supports zero-padding to target_dimension when migrating to/from vector(1536)
+    schemas without altering cosine similarity properties.
+    """
+
+    def __init__(
+        self,
+        model: str = "",
+        dimension: int = 0,
+        pad_to_dimension: Optional[int] = None,
+    ):
+        configured_model = model or settings.embedding_model
+        if not configured_model or configured_model == "text-embedding-3-small":
+            self.model_name = "all-MiniLM-L6-v2"
+        else:
+            self.model_name = configured_model
+
+        self._target_dimension = dimension or (settings.vector_dimension if settings.vector_dimension != 1536 else 0)
+        self._pad_to_dimension = pad_to_dimension
+        self._model = None
+        self._native_dimension = 0
+
+    def _get_model(self):
+        if self._model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+                self._model = SentenceTransformer(self.model_name)
+                self._native_dimension = self._model.get_sentence_embedding_dimension()
+            except ImportError:
+                raise ImportError(
+                    "sentence-transformers is required for local embeddings. "
+                    "Install with: pip install sentence-transformers"
+                )
+        return self._model
+
+    def embed(self, text: str) -> List[float]:
+        results = self.embed_batch([text])
+        return results[0]
+
+    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        model = self._get_model()
+        start = time.time()
+        raw_vectors = model.encode(texts, normalize_embeddings=True, convert_to_numpy=True)
+        vectors: List[List[float]] = []
+
+        target_pad = self._pad_to_dimension or (self._target_dimension if self._target_dimension > 0 else 0)
+
+        for vec in raw_vectors:
+            v_list = vec.tolist()
+            if target_pad and len(v_list) < target_pad:
+                # Zero-pad normalized vector up to target dimension
+                # (Preserves exact cosine similarity while satisfying column width)
+                v_list = v_list + [0.0] * (target_pad - len(v_list))
+            vectors.append(v_list)
+
+        elapsed_ms = (time.time() - start) * 1000
+        logger.info(
+            f"Embedded {len(texts)} texts locally ({self.model_name}) in {elapsed_ms:.1f}ms",
+            extra={"telemetry": {
+                "event_type": "local_embedding_batch_complete",
+                "model": self.model_name,
+                "batch_size": len(texts),
+                "dimension": len(vectors[0]) if vectors else 0,
+                "latency_ms": round(elapsed_ms, 2),
+            }}
+        )
+        return vectors
+
+    def get_dimension(self) -> int:
+        if self._pad_to_dimension:
+            return self._pad_to_dimension
+        if self._target_dimension:
+            return self._target_dimension
+        self._get_model()
+        return self._native_dimension
+
+    def get_model_name(self) -> str:
+        return self.model_name
+
+
+# ---------------------------------------------------------------------------
 # Provider Factory
 # ---------------------------------------------------------------------------
 
@@ -198,12 +289,15 @@ def get_embedding_provider(
 
     Supported providers:
       - "openai": OpenAI text-embedding API (requires OPENAI_API_KEY)
+      - "local" / "sentence-transformers": Local open-source SentenceTransformer
       - "mock": Deterministic mock for development/testing
     """
-    provider_name = provider or settings.embedding_provider
+    provider_name = (provider or settings.embedding_provider).lower()
 
     if provider_name == "openai":
         return OpenAIEmbeddingProvider(model=model, dimension=dimension)
+    elif provider_name in ("local", "sentence-transformers", "sentence_transformers", "huggingface"):
+        return SentenceTransformerEmbeddingProvider(model=model, dimension=dimension)
     elif provider_name == "mock":
         return MockEmbeddingProvider(dimension=dimension)
     else:

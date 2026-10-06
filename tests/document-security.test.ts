@@ -160,3 +160,128 @@ describe('Document Visibility & Role Access Matrix Verification', () => {
     assert.strictEqual(isDownloadPermitted('PRIVATE', superAdminSession, 'uploader-123').permitted, true)
   })
 })
+
+describe('Cloudflare R2 & S3 Secure Document Storage Unit Tests', () => {
+  const mockConfig = {
+    bucket: 'test-bucket',
+    accessKeyId: 'test-access-key',
+    secretAccessKey: 'test-secret-key',
+    region: 'auto',
+    endpoint: 'https://test-account.r2.cloudflarestorage.com',
+  }
+
+  test('S3StorageProvider checks configuration and generates correct R2 endpoint URLs', async () => {
+    const { S3StorageProvider } = await import('../lib/storage/s3.ts')
+    const provider = new S3StorageProvider(mockConfig)
+    assert.strictEqual(provider.isConfigured(), true)
+
+    const { host, url } = provider.getHostAndUrl('documents/test-uuid.pdf')
+    assert.strictEqual(host, 'test-account.r2.cloudflarestorage.com')
+    assert.strictEqual(url, 'https://test-account.r2.cloudflarestorage.com/test-bucket/documents/test-uuid.pdf')
+
+    // Empty config returns false
+    const unconfigured = new S3StorageProvider({ bucket: '', accessKeyId: '', secretAccessKey: '' })
+    assert.strictEqual(unconfigured.isConfigured(), false)
+  })
+
+  test('signRequest produces valid AWS4-HMAC-SHA256 authorization headers', async () => {
+    const { S3StorageProvider } = await import('../lib/storage/s3.ts')
+    const provider = new S3StorageProvider(mockConfig)
+
+    const signed = provider.signRequest('GET', 'documents/test-doc.pdf', '', {})
+    assert.ok(signed.Authorization.startsWith('AWS4-HMAC-SHA256 Credential=test-access-key/'))
+    assert.ok(signed.Authorization.includes('/auto/s3/aws4_request'))
+    assert.ok(signed['x-amz-date'])
+    assert.ok(signed['x-amz-content-sha256'])
+  })
+
+  test('streamSecureDocumentFromS3 returns null on directory traversal attempts', async () => {
+    const { streamSecureDocumentFromS3 } = await import('../lib/storage/s3.ts')
+    assert.strictEqual(await streamSecureDocumentFromS3('../../../etc/passwd', mockConfig), null)
+    assert.strictEqual(await streamSecureDocumentFromS3('..\\..\\windows\\win.ini', mockConfig), null)
+    assert.strictEqual(await streamSecureDocumentFromS3('folder/secret.pdf', mockConfig), null)
+  })
+
+  test('streamSecureDocumentFromS3 returns null when object is not found (404)', async () => {
+    const { streamSecureDocumentFromS3 } = await import('../lib/storage/s3.ts')
+
+    // Mock global fetch to return 404
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async () => new Response('Not Found', { status: 404 })
+
+    try {
+      const result = await streamSecureDocumentFromS3('nonexistent-uuid.pdf', mockConfig)
+      assert.strictEqual(result, null)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('uploadSecureDocumentToS3 uploads to private documents/ prefix and never exposes public URL', async () => {
+    const { uploadSecureDocumentToS3 } = await import('../lib/storage/s3.ts')
+
+    let capturedUrl = ''
+    let capturedMethod = ''
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      capturedUrl = url.toString()
+      capturedMethod = init?.method || 'GET'
+      return new Response('', { status: 200 })
+    }) as typeof fetch
+
+    try {
+      const dummyBuffer = Buffer.from('CONFIDENTIAL TAX AUDIT CERTIFICATE')
+      const result = await uploadSecureDocumentToS3(dummyBuffer, 'tax-audit-2026.pdf', 'application/pdf', mockConfig)
+
+      assert.ok(result.storageKey.endsWith('.pdf'))
+      assert.ok(!result.storageKey.includes('/'))
+      assert.strictEqual(capturedMethod, 'PUT')
+      assert.ok(capturedUrl.includes('/test-bucket/documents/'))
+      assert.ok(capturedUrl.endsWith(result.storageKey))
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('Public media upload respects STORAGE_PUBLIC_URL_PREFIX and uses uploads/ prefix', async () => {
+    const { S3StorageProvider } = await import('../lib/storage/s3.ts')
+    const provider = new S3StorageProvider({
+      ...mockConfig,
+      publicUrlPrefix: 'https://cdn.eliteconstruction.pk',
+    })
+
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () => new Response('', { status: 200 })) as typeof fetch
+
+    try {
+      const dummyImage = Buffer.from('JPEG DATA')
+      const result = await provider.upload(dummyImage, 'site-photo.jpg', 'image/jpeg')
+
+      assert.ok(result.url.startsWith('https://cdn.eliteconstruction.pk/uploads/images/'))
+      assert.ok(result.url.endsWith('.jpg'))
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('getSecureDocumentStream resolves local file when STORAGE_PROVIDER is not s3', async () => {
+    const { uploadSecureDocument, getSecureDocumentStream, deleteSecureDocument } = await import('../lib/storage/index.ts')
+
+    const originalEnv = process.env.STORAGE_PROVIDER
+    delete process.env.STORAGE_PROVIDER
+
+    try {
+      const buffer = Buffer.from('LOCAL STORAGE CONFIDENTIAL CONTENT')
+      const uploaded = await uploadSecureDocument(buffer, 'local-test-doc.txt', 'text/plain')
+
+      const streamResult = await getSecureDocumentStream(uploaded.storageKey)
+      assert.ok(streamResult !== null, 'Stream must be resolved from local disk')
+      assert.strictEqual(streamResult.size, buffer.length)
+
+      // Clean up
+      await deleteSecureDocument(uploaded.storageKey)
+    } finally {
+      if (originalEnv) process.env.STORAGE_PROVIDER = originalEnv
+    }
+  })
+})

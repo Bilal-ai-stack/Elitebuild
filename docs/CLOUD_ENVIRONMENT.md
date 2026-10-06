@@ -24,7 +24,18 @@ Every variable is classified by:
 | `NEXT_PUBLIC_APP_NAME` | `PUBLIC` | `BUILD_TIME` | `REQUIRED` | `CONFIG` | Dev, Preview, Prod | Display title: `"M/S ELITE CONSTRUCTION COMPANY"`. |
 | `RAG_SERVICE_URL` | `SERVER_ONLY` | `RUNTIME` | `REQUIRED` | `CONFIG` | Dev, Preview, Prod | Secure HTTPS URL of the FastAPI RAG microservice (e.g., `https://rag.elitebuild.com`). |
 | `RAG_SERVICE_API_KEY` | `SERVER_ONLY` | `RUNTIME` | `REQUIRED` | `SECRET` | Dev, Preview, Prod | Shared internal authentication secret sent via `X-RAG-Service-Key` header. |
-| `PRIVATE_STORAGE_ROOT` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Dev only | Local document storage path. On Vercel, external persistent storage (S3/GCS/Supabase) is required. |
+| `PRIVATE_STORAGE_ROOT` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Dev only | Local document storage path. On Vercel, external persistent storage (S3/R2) is used. |
+| `STORAGE_PROVIDER` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Dev, Preview, Prod | Persistent storage driver: `"local"` (dev default) or `"s3"` (AWS S3 / Cloudflare R2). |
+| `STORAGE_BUCKET` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Preview, Prod | S3 / R2 bucket name (required when `STORAGE_PROVIDER="s3"`). |
+| `STORAGE_ACCESS_KEY` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `SECRET` | Preview, Prod | S3 / R2 access key ID (required when `STORAGE_PROVIDER="s3"`). |
+| `STORAGE_SECRET_KEY` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `SECRET` | Preview, Prod | S3 / R2 secret access key (required when `STORAGE_PROVIDER="s3"`). |
+| `STORAGE_ENDPOINT` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Preview, Prod | S3 / R2 custom API endpoint (e.g. `https://<account-id>.r2.cloudflarestorage.com`). |
+| `STORAGE_REGION` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Preview, Prod | S3 / R2 region code (`auto` for Cloudflare R2, or AWS region like `us-east-1`). |
+| `STORAGE_PUBLIC_URL_PREFIX` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Preview, Prod | Optional custom CDN / public bucket domain for public assets. |
+| `RAG_MODE` | `SERVER_ONLY` | `RUNTIME` | `REQUIRED` | `CONFIG` | Dev, Preview, Prod | Dual RAG mode selector: `"trial"` (Vercel serverless Cloudflare Workers AI + Groq) or `"production"` (FastAPI microservice proxy). |
+| `CLOUDFLARE_ACCOUNT_ID` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Preview, Prod | Cloudflare account ID for Workers AI embeddings and reranking. |
+| `CLOUDFLARE_AI_API_TOKEN` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `SECRET` | Preview, Prod | Cloudflare Workers AI API bearer token. |
+| `GROQ_API_KEY` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `SECRET` | Preview, Prod | Groq Cloud API key for factual answer generation. |
 | `RATE_LIMIT_WINDOW_MS` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Dev, Preview, Prod | Window in ms for in-memory / edge rate limiter (default: `60000`). |
 | `RATE_LIMIT_MAX_REQUESTS` | `SERVER_ONLY` | `RUNTIME` | `OPTIONAL` | `CONFIG` | Dev, Preview, Prod | Maximum requests per IP per window (default: `30`). |
 

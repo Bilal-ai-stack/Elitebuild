@@ -76,8 +76,9 @@ The ELITEBUILD platform uses a decoupled, hybrid-cloud production architecture:
 > The local development environment writes documents to `./storage/documents` and media to `./public/uploads`.
 > On Vercel, the local container filesystem is read-only and ephemeral; any files written to local disk are discarded when serverless instances recycle.
 >
-> **Production Requirement:**
-> For production deployment where admins upload company documents or images, an external cloud blob storage provider (AWS S3, Supabase Storage, Cloudflare R2, or Google Cloud Storage) must be configured in `lib/storage/index.ts`.
+> **Production Requirement & Resolution:**
+> For production deployment where admins upload company documents or images, an external cloud blob storage provider is required.
+> **Resolved & Implemented:** Native zero-dependency AWS S3 / Cloudflare R2 storage driver is implemented in `lib/storage/s3.ts` and integrated in `lib/storage/index.ts`. Set `STORAGE_PROVIDER="s3"` along with `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `STORAGE_ENDPOINT` to enable. Cloudflare R2 bucket integration has been verified live.
 
 ---
 
@@ -106,6 +107,10 @@ AUTH_SECRET=<generate-via-openssl-rand-base64-32>
 NEXTAUTH_URL=https://elitebuild.vercel.app
 NEXT_PUBLIC_APP_URL=https://eliteconstruction.pk
 NEXT_PUBLIC_APP_NAME="M/S ELITE CONSTRUCTION COMPANY"
+RAG_MODE=trial
+CLOUDFLARE_ACCOUNT_ID=<cloudflare-account-id>
+CLOUDFLARE_AI_API_TOKEN=<cloudflare-workers-ai-token>
+GROQ_API_KEY=<groq-api-key>
 RAG_SERVICE_URL=https://<your-rag-fastapi-service-host>
 RAG_SERVICE_API_KEY=<shared-secret-key>
 ```

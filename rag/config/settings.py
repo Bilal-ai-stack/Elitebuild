@@ -32,7 +32,7 @@ class RAGSettings(BaseSettings):
         validation_alias="DATABASE_URL"
     )
     vector_table_name: str = "rag_chunks"
-    vector_dimension: int = 1536  # Default dimension for text-embedding-3-small
+    vector_dimension: int = Field(default=384, validation_alias="VECTOR_DIMENSION")  # 384 for all-MiniLM-L6-v2
     hnsw_m: int = 16
     hnsw_ef_construction: int = 64
     hnsw_ef_search: int = 40
@@ -49,14 +49,14 @@ class RAGSettings(BaseSettings):
     # -------------------------------------------------------------------------
     # Model Configurations
     # -------------------------------------------------------------------------
-    embedding_provider: str = Field(default="openai", validation_alias="EMBEDDING_PROVIDER")
-    embedding_model: str = Field(default="text-embedding-3-small", validation_alias="EMBEDDING_MODEL")
+    embedding_provider: str = Field(default="local", validation_alias="EMBEDDING_PROVIDER")
+    embedding_model: str = Field(default="all-MiniLM-L6-v2", validation_alias="EMBEDDING_MODEL")
 
     reranker_provider: str = Field(default="local", validation_alias="RERANKER_PROVIDER")
     reranker_model: str = Field(default="BAAI/bge-reranker-base", validation_alias="RERANKER_MODEL")
 
-    llm_provider: str = Field(default="openai", validation_alias="LLM_PROVIDER")
-    llm_model: str = Field(default="gpt-4o-mini", validation_alias="LLM_MODEL")
+    llm_provider: str = Field(default="groq", validation_alias="LLM_PROVIDER")
+    llm_model: str = Field(default="llama-3.3-70b-versatile", validation_alias="LLM_MODEL")
     llm_temperature: float = Field(default=0.0, validation_alias="LLM_TEMPERATURE")
     llm_max_output_tokens: int = Field(default=2000, validation_alias="LLM_MAX_OUTPUT_TOKENS")
     llm_timeout_seconds: int = Field(default=30, validation_alias="LLM_TIMEOUT_SECONDS")

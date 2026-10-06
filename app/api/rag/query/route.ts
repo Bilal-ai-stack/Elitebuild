@@ -1,16 +1,20 @@
 // =============================================================================
-// ELITEBUILD — Authenticated RAG Query API Proxy Route (Step 16)
+// ELITEBUILD — Dual-Mode Authenticated RAG Query API Route
 // =============================================================================
-// Connects the Next.js client to the FastAPI RAG microservice.
+// Supports:
+// 1. RAG_MODE=trial (Default serverless Vercel execution via Cloudflare + pgvector + Groq)
+// 2. RAG_MODE=production (Secure proxy to containerized FastAPI microservice)
 // - Authenticates the request server-side via Next.js session JWT.
 // - Injects verified X-User-Role and X-User-Id headers (clients cannot spoof).
 // - Enforces pre-retrieval query validation & length constraints.
 // - Provides graceful degraded fallback if the RAG microservice is unreachable.
+// - Returns stable unified contract with citations, status, and trace ID.
 // =============================================================================
 
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth/session'
 import type { RagQueryResponse } from '@/lib/rag/types'
+import { executeTrialQuery } from '@/lib/rag/trial/engine'
 
 export async function POST(request: Request) {
   try {
@@ -36,9 +40,6 @@ export async function POST(request: Request) {
     const userRole = session?.role || 'PUBLIC'
     const userId = session?.userId || ''
 
-    // 2. Prepare upstream microservice payload and headers
-    const ragBaseUrl = process.env.RAG_SERVICE_URL || 'http://127.0.0.1:8000'
-    const serviceKey = process.env.RAG_SERVICE_API_KEY || ''
     const tenantId = typeof body.tenantId === 'string' && body.tenantId.trim()
       ? body.tenantId.trim()
       : 'elitebuild-core'
@@ -46,6 +47,37 @@ export async function POST(request: Request) {
     const topK = typeof body.options?.topK === 'number'
       ? Math.min(Math.max(body.options.topK, 1), 20)
       : 5
+
+    const ragMode = (process.env.RAG_MODE || 'trial').toLowerCase().trim()
+
+    // -------------------------------------------------------------------------
+    // Mode 1: Trial Mode (Serverless Vercel Execution)
+    // -------------------------------------------------------------------------
+    if (ragMode !== 'production') {
+      const trialResult = await executeTrialQuery({
+        query: rawQuery,
+        tenantId,
+        userRole,
+        topK,
+      })
+
+      return NextResponse.json({
+        success: true,
+        data: trialResult,
+        answer: trialResult.answer,
+        citations: trialResult.citations,
+        sources: trialResult.sources || [],
+        status: trialResult.status,
+        trace_id: trialResult.trace_id || trialResult.requestId,
+        requestId: trialResult.requestId,
+      })
+    }
+
+    // -------------------------------------------------------------------------
+    // Mode 2: Production Mode (Secure Proxy to FastAPI Microservice)
+    // -------------------------------------------------------------------------
+    const ragBaseUrl = process.env.RAG_SERVICE_URL || 'http://127.0.0.1:8000'
+    const serviceKey = process.env.RAG_SERVICE_API_KEY || ''
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 25000) // 25s timeout
@@ -74,36 +106,46 @@ export async function POST(request: Request) {
 
       if (!res.ok) {
         const errorDetail = await res.text().catch(() => 'Upstream service error')
+        const fallbackResponse: RagQueryResponse = {
+          requestId: `rag-fallback-${Date.now()}`,
+          status: 'INSUFFICIENT_EVIDENCE',
+          operationalStatus: 'DEGRADED',
+          answer: 'The verified knowledge base could not complete this request at this time. Please contact M/S ELITE Construction Company directly.',
+          citations: [],
+          sources: [],
+          telemetry: {
+            totalLatencyMs: 0,
+            retrievalLatencyMs: 0,
+            rerankLatencyMs: 0,
+            generationLatencyMs: 0,
+            promptTokens: 0,
+            completionTokens: 0,
+            estimatedCostUsd: 0,
+            cacheHit: false,
+            operationalStatus: 'DEGRADED',
+            degradedMode: true,
+            degradedReasons: [`RAG microservice returned HTTP ${res.status}: ${errorDetail.slice(0, 100)}`],
+          },
+        }
+
         return NextResponse.json({
           success: true,
-          data: {
-            requestId: `rag-fallback-${Date.now()}`,
-            status: 'INSUFFICIENT_EVIDENCE',
-            operationalStatus: 'DEGRADED',
-            answer: 'The verified knowledge base could not complete this request at this time. Please contact M/S ELITE Construction Company directly.',
-            citations: [],
-            telemetry: {
-              totalLatencyMs: 0,
-              retrievalLatencyMs: 0,
-              rerankLatencyMs: 0,
-              generationLatencyMs: 0,
-              promptTokens: 0,
-              completionTokens: 0,
-              estimatedCostUsd: 0,
-              cacheHit: false,
-              operationalStatus: 'DEGRADED',
-              degradedMode: true,
-              degradedReasons: [`RAG microservice returned HTTP ${res.status}: ${errorDetail.slice(0, 100)}`],
-            },
-          } satisfies RagQueryResponse,
+          data: fallbackResponse,
+          answer: fallbackResponse.answer,
+          citations: fallbackResponse.citations,
+          sources: fallbackResponse.sources || [],
+          status: fallbackResponse.status,
+          trace_id: fallbackResponse.requestId,
+          requestId: fallbackResponse.requestId,
         })
       }
 
       const upstreamData = await res.json()
 
-      // Map Python snake_case to TypeScript camelCase if needed
+      // Map Python snake_case to TypeScript camelCase
       const response: RagQueryResponse = {
         requestId: upstreamData.request_id || `rag-${Date.now()}`,
+        trace_id: upstreamData.trace_id || upstreamData.request_id || `trace-${Date.now()}`,
         status: upstreamData.status || 'INSUFFICIENT_EVIDENCE',
         operationalStatus: upstreamData.operational_status || 'HEALTHY',
         answer: upstreamData.answer || '',
@@ -117,6 +159,7 @@ export async function POST(request: Request) {
           versionTag: (c.version_tag as string) || '1.0',
           snippet: (c.snippet as string) || '',
         })),
+        sources: upstreamData.sources || [],
         telemetry: upstreamData.telemetry
           ? {
               totalLatencyMs: upstreamData.telemetry.total_latency_ms || 0,
@@ -134,34 +177,52 @@ export async function POST(request: Request) {
           : undefined,
       }
 
-      return NextResponse.json({ success: true, data: response })
+      return NextResponse.json({
+        success: true,
+        data: response,
+        answer: response.answer,
+        citations: response.citations,
+        sources: response.sources || [],
+        status: response.status,
+        trace_id: response.trace_id,
+        requestId: response.requestId,
+      })
     } catch (fetchErr: unknown) {
       clearTimeout(timeoutId)
       const isAbort = (fetchErr as Error)?.name === 'AbortError'
       const msg = isAbort ? 'RAG query timed out' : ((fetchErr as Error)?.message || 'Connection failed')
 
+      const offlineResponse: RagQueryResponse = {
+        requestId: `rag-offline-${Date.now()}`,
+        status: 'INSUFFICIENT_EVIDENCE',
+        operationalStatus: 'DEGRADED',
+        answer: 'The verified knowledge service is currently offline or unreachable. Please contact M/S ELITE Construction Company directly via WhatsApp or our Contact page.',
+        citations: [],
+        sources: [],
+        telemetry: {
+          totalLatencyMs: 0,
+          retrievalLatencyMs: 0,
+          rerankLatencyMs: 0,
+          generationLatencyMs: 0,
+          promptTokens: 0,
+          completionTokens: 0,
+          estimatedCostUsd: 0,
+          cacheHit: false,
+          operationalStatus: 'DEGRADED',
+          degradedMode: true,
+          degradedReasons: [`RAG microservice unreachable: ${msg}`],
+        },
+      }
+
       return NextResponse.json({
         success: true,
-        data: {
-          requestId: `rag-offline-${Date.now()}`,
-          status: 'INSUFFICIENT_EVIDENCE',
-          operationalStatus: 'DEGRADED',
-          answer: 'The verified knowledge service is currently offline or unreachable. Please contact M/S ELITE Construction Company directly via WhatsApp or our Contact page.',
-          citations: [],
-          telemetry: {
-            totalLatencyMs: 0,
-            retrievalLatencyMs: 0,
-            rerankLatencyMs: 0,
-            generationLatencyMs: 0,
-            promptTokens: 0,
-            completionTokens: 0,
-            estimatedCostUsd: 0,
-            cacheHit: false,
-            operationalStatus: 'DEGRADED',
-            degradedMode: true,
-            degradedReasons: [`RAG microservice unreachable: ${msg}`],
-          },
-        } satisfies RagQueryResponse,
+        data: offlineResponse,
+        answer: offlineResponse.answer,
+        citations: offlineResponse.citations,
+        sources: offlineResponse.sources || [],
+        status: offlineResponse.status,
+        trace_id: offlineResponse.requestId,
+        requestId: offlineResponse.requestId,
       })
     }
   } catch (err: unknown) {

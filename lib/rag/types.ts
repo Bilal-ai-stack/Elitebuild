@@ -112,10 +112,12 @@ export interface RagQueryRequest {
 
 export interface RagQueryResponse {
   requestId: string
+  trace_id?: string
   status: RagStatus
   operationalStatus?: RagOperationalStatus
   answer: string
   citations: RagCitation[]
+  sources?: string[] | RagCitation[]
   telemetry?: RagTelemetry
 }
 

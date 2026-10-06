@@ -96,29 +96,39 @@ export async function uploadSecureDocument(
   mimeType: string
 ): Promise<SecureDocumentUploadResult> {
   const storageDir = getPrivateStorageRoot()
-  await mkdir(storageDir, { recursive: true })
+  let localResult: SecureDocumentUploadResult | null = null
 
-  // Sanitize extension
-  const rawExt = path.extname(originalName).toLowerCase()
-  const ext = ALLOWED_DOCUMENT_EXTENSIONS.has(rawExt) ? rawExt : '.bin'
+  try {
+    await mkdir(storageDir, { recursive: true })
+    const rawExt = path.extname(originalName).toLowerCase()
+    const ext = ALLOWED_DOCUMENT_EXTENSIONS.has(rawExt) ? rawExt : '.bin'
+    const storageKey = `${uuidv4()}${ext}`
+    const targetPath = path.resolve(storageDir, storageKey)
 
-  // Generate non-enumerable, collision-free UUID storage filename
-  const storageKey = `${uuidv4()}${ext}`
-  const targetPath = path.resolve(storageDir, storageKey)
-
-  // Verify path strictly resides within storageDir
-  if (!targetPath.startsWith(storageDir + path.sep)) {
-    throw new Error('Security exception: invalid target storage location')
+    if (targetPath.startsWith(storageDir + path.sep)) {
+      await writeFile(targetPath, file)
+      localResult = {
+        fileName: storageKey,
+        fileSize: file.length,
+        mimeType,
+        storageKey,
+      }
+    }
+  } catch {
+    // Read-only filesystem in serverless environments
   }
 
-  await writeFile(targetPath, file)
-
-  return {
-    fileName: storageKey,
-    fileSize: file.length,
-    mimeType,
-    storageKey,
+  if (process.env.STORAGE_PROVIDER === 's3' && process.env.NODE_ENV === 'production') {
+    const { uploadSecureDocumentToS3 } = await import('./s3.ts')
+    return uploadSecureDocumentToS3(file, originalName, mimeType)
   }
+
+  if (localResult) {
+    return localResult
+  }
+
+  const { uploadSecureDocumentToS3 } = await import('./s3.ts')
+  return uploadSecureDocumentToS3(file, originalName, mimeType)
 }
 
 /**
@@ -171,9 +181,42 @@ export async function resolveSecureDocumentPath(storageKeyOrFileName: string): P
 }
 
 /**
- * Deletes a secure document from private storage.
+ * Resolves a readable stream for a secure document from Cloudflare R2 / S3 or local disk.
+ */
+export async function getSecureDocumentStream(
+  storageKeyOrFileName: string
+): Promise<{ stream: ReadableStream<Uint8Array>; size: number; mimeType?: string } | null> {
+  if (process.env.STORAGE_PROVIDER === 's3') {
+    const { streamSecureDocumentFromS3 } = await import('./s3.ts')
+    const cloudResult = await streamSecureDocumentFromS3(storageKeyOrFileName)
+    if (cloudResult) return cloudResult
+  }
+
+  const localPath = await resolveSecureDocumentPath(storageKeyOrFileName)
+  if (!localPath) return null
+
+  try {
+    const s = await stat(/*turbopackIgnore: true*/ localPath)
+    if (!s.isFile()) return null
+    const fsModule = await import('fs')
+    const { Readable } = await import('stream')
+    const nodeStream = fsModule.createReadStream(/*turbopackIgnore: true*/ localPath)
+    const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>
+    return { stream: webStream, size: s.size }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Deletes a secure document from private storage (Cloudflare R2 or local disk).
  */
 export async function deleteSecureDocument(storageKeyOrFileName: string): Promise<void> {
+  if (process.env.STORAGE_PROVIDER === 's3') {
+    const { deleteSecureDocumentFromS3 } = await import('./s3.ts')
+    await deleteSecureDocumentFromS3(storageKeyOrFileName).catch(() => {})
+  }
+
   const filePath = await resolveSecureDocumentPath(storageKeyOrFileName)
   if (filePath) {
     try {
@@ -183,6 +226,7 @@ export async function deleteSecureDocument(storageKeyOrFileName: string): Promis
     }
   }
 }
+
 
 // ---------------------------------------------------------------------------
 // Local filesystem provider for Public Media (Images, Logos)
@@ -255,11 +299,17 @@ class LocalStorageProvider implements StorageProvider {
 // Provider singleton
 // ---------------------------------------------------------------------------
 
+import { S3StorageProvider } from './s3.ts'
+
 let storageInstance: StorageProvider | null = null
 
 export function getStorage(): StorageProvider {
   if (!storageInstance) {
-    storageInstance = new LocalStorageProvider()
+    if (process.env.STORAGE_PROVIDER === 's3') {
+      storageInstance = new S3StorageProvider()
+    } else {
+      storageInstance = new LocalStorageProvider()
+    }
   }
   return storageInstance
 }

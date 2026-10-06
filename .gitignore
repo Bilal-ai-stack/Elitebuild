@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -41,3 +42,4 @@ __pycache__/
 /rag/venv/
 .pytest_cache/
 .mypy_cache/
+/scratch/

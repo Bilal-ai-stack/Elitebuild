@@ -18,6 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from rag.api.app import app
+from rag.config.settings import settings
 from rag.observability.alerts import (
     Alert,
     AlertEvaluator,
@@ -57,7 +58,10 @@ from rag.observability.security_monitor import (
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    headers = {}
+    if settings.service_api_key:
+        headers["X-RAG-Service-Key"] = settings.service_api_key
+    return TestClient(app, headers=headers)
 
 
 # -----------------------------------------------------------------------------

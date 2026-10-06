@@ -159,6 +159,12 @@ class TestEmbeddingProviders:
         # Should fall back to mock
         assert provider.get_model_name() == "mock-embedding-deterministic"
 
+    def test_provider_factory_local(self):
+        from rag.embeddings.provider import get_embedding_provider, SentenceTransformerEmbeddingProvider
+        provider = get_embedding_provider(provider="local", model="all-MiniLM-L6-v2")
+        assert isinstance(provider, SentenceTransformerEmbeddingProvider)
+        assert provider.get_model_name() == "all-MiniLM-L6-v2"
+
     def test_embedding_dimension_validation(self):
         from rag.embeddings.provider import MockEmbeddingProvider
         for dim in [128, 384, 768, 1536]:
