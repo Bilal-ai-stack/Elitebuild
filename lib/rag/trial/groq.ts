@@ -166,7 +166,7 @@ export async function generateGroundedAnswer(
     }
   }
 
-  const apiKey = options?.apiKey || process.env.GROQ_API_KEY
+  const apiKey = options?.apiKey || process.env.GROQ_API_KEY || process.env.GROQ_KEY
   const model = options?.model || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL
   const context = packageEvidenceContext(evidence)
 

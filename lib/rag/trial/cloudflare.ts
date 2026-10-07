@@ -39,7 +39,7 @@ export async function getCloudflareEmbedding(
   options?: CloudflareEmbeddingOptions
 ): Promise<number[] | null> {
   const accountId = options?.accountId || process.env.CLOUDFLARE_ACCOUNT_ID
-  const apiToken = options?.apiToken || process.env.CLOUDFLARE_AI_API_TOKEN
+  const apiToken = options?.apiToken || process.env.CLOUDFLARE_AI_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN
   const model = options?.model || process.env.EMBEDDING_MODEL || DEFAULT_CLOUDFLARE_EMBEDDING_MODEL
 
   if (!accountId || !apiToken) {
@@ -93,7 +93,7 @@ export async function rerankWithCloudflare(
   if (!candidates || candidates.length === 0) return []
 
   const accountId = options?.accountId || process.env.CLOUDFLARE_ACCOUNT_ID
-  const apiToken = options?.apiToken || process.env.CLOUDFLARE_AI_API_TOKEN
+  const apiToken = options?.apiToken || process.env.CLOUDFLARE_AI_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN
   const model = options?.model || process.env.RERANKER_MODEL || DEFAULT_CLOUDFLARE_RERANKER_MODEL
 
   if (!accountId || !apiToken) {

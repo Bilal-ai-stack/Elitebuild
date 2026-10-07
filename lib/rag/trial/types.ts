@@ -17,6 +17,7 @@ export interface TrialChunkRecord {
   timestamp: string | Date
   content_hash?: string | null
   char_count: number
+  tenant_id?: string | null
   similarity?: number
   reranker_score?: number
 }
