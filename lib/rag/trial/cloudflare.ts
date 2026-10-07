@@ -31,18 +31,19 @@ export function generateDeterministicVector(text: string, dimension = CLOUDFLARE
 
 /**
  * Fetch embeddings via Cloudflare Workers AI REST API.
+ * Returns null if Cloudflare Workers AI is unconfigured or unavailable.
+ * Invariant: NEVER returns synthetic or deterministic vectors for semantic search.
  */
 export async function getCloudflareEmbedding(
   text: string,
   options?: CloudflareEmbeddingOptions
-): Promise<number[]> {
+): Promise<number[] | null> {
   const accountId = options?.accountId || process.env.CLOUDFLARE_ACCOUNT_ID
   const apiToken = options?.apiToken || process.env.CLOUDFLARE_AI_API_TOKEN
   const model = options?.model || process.env.EMBEDDING_MODEL || DEFAULT_CLOUDFLARE_EMBEDDING_MODEL
 
   if (!accountId || !apiToken) {
-    // Graceful fallback to deterministic 384-dimensional unit vector
-    return generateDeterministicVector(text, CLOUDFLARE_VECTOR_DIMENSION)
+    return null
   }
 
   const cleanModel = model.startsWith('@cf/') ? model : `@cf/${model}`
@@ -61,8 +62,8 @@ export async function getCloudflareEmbedding(
     })
 
     if (!res.ok) {
-      console.warn(`Cloudflare embedding API responded with status ${res.status}. Falling back to deterministic vector.`)
-      return generateDeterministicVector(text, CLOUDFLARE_VECTOR_DIMENSION)
+      console.warn(`Cloudflare embedding API responded with status ${res.status}. Falling back to degraded lexical search.`)
+      return null
     }
 
     const data = await res.json()
@@ -74,10 +75,10 @@ export async function getCloudflareEmbedding(
       return data.result.data[0] || data.result.data
     }
 
-    return generateDeterministicVector(text, CLOUDFLARE_VECTOR_DIMENSION)
+    return null
   } catch (err) {
     console.warn('Cloudflare embedding request error:', err)
-    return generateDeterministicVector(text, CLOUDFLARE_VECTOR_DIMENSION)
+    return null
   }
 }
 

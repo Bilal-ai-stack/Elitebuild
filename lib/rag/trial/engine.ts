@@ -2,7 +2,8 @@
 // ELITEBUILD — Trial RAG Engine Orchestrator
 // =============================================================================
 // Coordinates Next.js serverless pipeline:
-// Auth Clearance → Cloudflare Embedding → pgvector Retrieval → Rerank → Groq → Citations
+// Auth Clearance → Cloudflare Embedding / Safe Lexical Retrieval → Rerank → Groq → Citations
+// Invariant: Never uses fake/synthetic vectors for semantic search.
 // =============================================================================
 
 import { v4 as uuidv4 } from 'uuid'
@@ -26,25 +27,31 @@ export async function executeTrialQuery(params: {
   const topK = params.topK || 5
 
   // 1. Generate query embedding via Cloudflare Workers AI (384-dim)
+  // Returns null if unconfigured/unavailable (NEVER returns synthetic vectors)
   const embedStart = Date.now()
   const queryVector = await getCloudflareEmbedding(params.query)
   const embedLatency = Date.now() - embedStart
 
-  // 2. Pre-retrieval authorized dense vector retrieval from Neon pgvector
+  // 2. Pre-retrieval authorized retrieval
+  // If embedding is available -> dense pgvector search
+  // If embedding is null -> explicit safe lexical/BM25 degraded mode
   const retrieveStart = Date.now()
-  const candidateChunks = await retrieveAuthorizedChunks({
+  const { chunks: candidateChunks, mode, degradedReason } = await retrieveAuthorizedChunks({
+    query: params.query,
     queryVector,
     tenantId,
     userRole,
-    topK: Math.max(topK * 3, 10), // Retrieve candidates for reranking
+    topK: Math.max(topK * 3, 10),
   })
   const retrieveLatency = Date.now() - retrieveStart
 
-  // 3. Optional Reranking via Cloudflare Workers AI
+  const isDegraded = mode === 'LEXICAL_DEGRADED' || queryVector === null
+
+  // 3. Reranking
   const rerankStart = Date.now()
   let rankedChunks = candidateChunks
 
-  if (candidateChunks.length > 0) {
+  if (candidateChunks.length > 0 && !isDegraded) {
     const rerankPairs = candidateChunks.map((c) => ({
       id: c.chunk_id,
       text: c.chunk_text,
@@ -59,6 +66,11 @@ export async function executeTrialQuery(params: {
         reranker_score: scoreMap.get(c.chunk_id) ?? c.similarity ?? 0.5,
       }))
       .sort((a, b) => (b.reranker_score || 0) - (a.reranker_score || 0))
+      .slice(0, topK)
+  } else if (candidateChunks.length > 0) {
+    // In degraded mode, sort strictly by lexical relevance score
+    rankedChunks = candidateChunks
+      .sort((a, b) => (b.similarity || 0) - (a.similarity || 0))
       .slice(0, topK)
   }
   const rerankLatency = Date.now() - rerankStart
@@ -91,7 +103,7 @@ export async function executeTrialQuery(params: {
     requestId,
     trace_id: traceId,
     status,
-    operationalStatus: 'HEALTHY',
+    operationalStatus: isDegraded ? 'DEGRADED' : 'HEALTHY',
     answer,
     citations,
     sources,
@@ -104,8 +116,11 @@ export async function executeTrialQuery(params: {
       completionTokens: tokens.completion,
       estimatedCostUsd: 0,
       cacheHit: false,
-      operationalStatus: 'HEALTHY',
-      degradedMode: false,
+      operationalStatus: isDegraded ? 'DEGRADED' : 'HEALTHY',
+      degradedMode: isDegraded,
+      degradedReasons: isDegraded
+        ? [degradedReason || 'CLOUDFLARE_EMBEDDING_UNAVAILABLE_LEXICAL_FALLBACK']
+        : undefined,
     },
   }
 }

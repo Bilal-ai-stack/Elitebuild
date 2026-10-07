@@ -219,4 +219,89 @@ describe('Trial RAG Mode & Dual-Mode Contract', () => {
     assert.ok(context.includes('</verified_evidence>'), 'Must end boundary')
     assert.ok(context.includes('[1] Document: doc-profile'))
   })
+
+  // ---------------------------------------------------------------------------
+  // 7. Audit Trial RAG Fallbacks — No Synthetic Vectors for Search
+  // ---------------------------------------------------------------------------
+  test('Cloudflare embedding returns null on unconfigured/invalid tokens instead of synthetic vectors', async () => {
+    const { getCloudflareEmbedding } = await import('../lib/rag/trial/cloudflare.ts')
+    const res = await getCloudflareEmbedding('Test Query', {
+      accountId: '',
+      apiToken: '',
+    })
+    assert.strictEqual(res, null, 'Unconfigured Cloudflare must return null rather than a fake vector')
+  })
+
+  // ---------------------------------------------------------------------------
+  // 8. Safe Lexical Retrieval Across Verified Knowledge Base
+  // ---------------------------------------------------------------------------
+  test('Safe lexical retrieval finds matching evidence for representative questions', async () => {
+    const { retrieveAuthorizedChunks } = await import('../lib/rag/trial/retrieval.ts')
+
+    // Company profile
+    const r1 = await retrieveAuthorizedChunks({
+      query: 'When was Elite Construction Company established and where is it headquartered?',
+      userRole: 'PUBLIC',
+    })
+    assert.ok(r1.chunks.length > 0, 'Must retrieve company profile chunks')
+    assert.ok(r1.chunks.some((c) => c.document_id === 'doc-company-profile'))
+
+    // Services
+    const r2 = await retrieveAuthorizedChunks({
+      query: 'What core engineering and civil construction services are provided?',
+      userRole: 'PUBLIC',
+    })
+    assert.ok(r2.chunks.length > 0, 'Must retrieve services chunks')
+    assert.ok(r2.chunks.some((c) => c.document_id === 'doc-services'))
+
+    // Credentials
+    const r3 = await retrieveAuthorizedChunks({
+      query: 'Does Elite hold a Pakistan Engineering Council PEC license and C&W enlistment?',
+      userRole: 'PUBLIC',
+    })
+    assert.ok(r3.chunks.length > 0, 'Must retrieve credentials chunks')
+    assert.ok(r3.chunks.some((c) => c.document_id === 'doc-credentials'))
+  })
+
+  // ---------------------------------------------------------------------------
+  // 9. Negative Control: Unanswerable Question Produces INSUFFICIENT_EVIDENCE
+  // ---------------------------------------------------------------------------
+  test('Unanswerable questions return empty chunks and INSUFFICIENT_EVIDENCE', async () => {
+    const { retrieveAuthorizedChunks } = await import('../lib/rag/trial/retrieval.ts')
+    const { assessEvidenceStatus } = await import('../lib/rag/trial/groq.ts')
+
+    const unanswerable = await retrieveAuthorizedChunks({
+      query: 'Who won the 2024 cricket world cup trophy and what was the final match score?',
+      userRole: 'PUBLIC',
+    })
+    assert.strictEqual(unanswerable.chunks.length, 0, 'Out-of-domain query must return 0 chunks')
+    assert.strictEqual(assessEvidenceStatus([]), 'INSUFFICIENT_EVIDENCE')
+  })
+
+  // ---------------------------------------------------------------------------
+  // 10. Security Acceptance: Role-Based Private Evidence Isolation
+  // ---------------------------------------------------------------------------
+  test('Public users cannot retrieve private confidential records, but SUPER_ADMIN can', async () => {
+    const { retrieveAuthorizedChunks } = await import('../lib/rag/trial/retrieval.ts')
+
+    // Querying for confidential audit as PUBLIC
+    const pubRes = await retrieveAuthorizedChunks({
+      query: 'proprietary executive payroll audit and confidential margins',
+      userRole: 'PUBLIC',
+    })
+    assert.ok(
+      !pubRes.chunks.some((c) => c.document_id === 'doc-internal-audit-2025'),
+      'PUBLIC users must NEVER retrieve private audit chunks'
+    )
+
+    // Querying for confidential audit as SUPER_ADMIN
+    const adminRes = await retrieveAuthorizedChunks({
+      query: 'proprietary executive payroll audit and confidential margins',
+      userRole: 'SUPER_ADMIN',
+    })
+    assert.ok(
+      adminRes.chunks.some((c) => c.document_id === 'doc-internal-audit-2025'),
+      'SUPER_ADMIN must be permitted to retrieve private audit chunks'
+    )
+  })
 })
