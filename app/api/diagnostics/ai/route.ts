@@ -160,6 +160,20 @@ export async function GET() {
         parsed = null
       }
 
+      // Also fetch available models from Groq to find supported model IDs
+      let availableModels: string[] = []
+      try {
+        const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+          headers: { Authorization: `Bearer ${groqKey}` },
+        })
+        if (modelsRes.ok) {
+          const mData = await modelsRes.json()
+          availableModels = Array.isArray(mData?.data) ? mData.data.map((m: any) => m.id) : []
+        }
+      } catch {
+        // ignore
+      }
+
       result.groqDiagnostics = {
         tested: true,
         httpStatus: gRes.status,
@@ -170,6 +184,7 @@ export async function GET() {
         promptTokens: parsed?.usage?.prompt_tokens ?? null,
         completionTokens: parsed?.usage?.completion_tokens ?? null,
         responseText: parsed?.choices?.[0]?.message?.content ?? null,
+        availableModels,
       }
     } catch (err: any) {
       result.groqDiagnostics = {
@@ -185,23 +200,35 @@ export async function GET() {
   // ---------------------------------------------------------------------------
   try {
     const extRows: any = await prisma.$queryRawUnsafe(
-      "SELECT extversion FROM pg_extension WHERE extname = 'vector';"
+      `SELECT e.extname, e.extversion, n.nspname 
+       FROM pg_extension e 
+       JOIN pg_namespace n ON e.extnamespace = n.oid 
+       WHERE e.extname = 'vector';`
     )
     const isInstalled = Array.isArray(extRows) && extRows.length > 0
     const extVersion = isInstalled ? extRows[0].extversion : null
+    const extNamespace = isInstalled ? extRows[0].nspname : null
 
     // Check table and embedding column if table exists
     let columnType: string | null = null
     let configuredDimension: number | null = null
+    let rowCount: number | null = null
+
+    try {
+      const countRows: any = await prisma.$queryRawUnsafe("SELECT count(*) as c FROM rag_chunks;")
+      rowCount = countRows?.[0]?.c ? Number(countRows[0].c) : 0
+    } catch {
+      // ignore
+    }
 
     try {
       const colRows: any = await prisma.$queryRawUnsafe(`
-        SELECT column_name, data_type, udt_name 
+        SELECT column_name, data_type, udt_name, udt_schema 
         FROM information_schema.columns 
         WHERE table_name = 'rag_chunks' AND column_name = 'embedding';
       `)
       if (Array.isArray(colRows) && colRows.length > 0) {
-        columnType = `${colRows[0].data_type} (${colRows[0].udt_name})`
+        columnType = `${colRows[0].data_type} (${colRows[0].udt_schema}.${colRows[0].udt_name})`
       }
 
       const dimRows: any = await prisma.$queryRawUnsafe(`
@@ -210,26 +237,30 @@ export async function GET() {
         WHERE attrelid = 'rag_chunks'::regclass AND attname = 'embedding';
       `)
       if (Array.isArray(dimRows) && dimRows.length > 0) {
-        // atttypmod for vector(N) equals N
         configuredDimension = dimRows[0].atttypmod > 0 ? dimRows[0].atttypmod : null
       }
     } catch {
       // rag_chunks table might not exist yet or have different permissions
     }
 
-    // Test a simple vector calculation to verify engine readiness
+    // Test vector calculation to verify engine readiness and capture any error
     let vectorCastTest = false
+    let vectorCastError: string | null = null
     try {
       const testVec: any = await prisma.$queryRawUnsafe("SELECT '[1,2,3]'::vector AS test;")
       vectorCastTest = Array.isArray(testVec) && testVec.length > 0
-    } catch {
+    } catch (vErr: any) {
       vectorCastTest = false
+      vectorCastError = vErr?.message || String(vErr)
     }
 
     result.pgvectorDiagnostics = {
       installed: isInstalled ? 'YES' : 'NO',
       version: extVersion,
+      namespace: extNamespace,
       vectorCastFunctional: vectorCastTest,
+      vectorCastError,
+      ragChunksRowCount: rowCount,
       ragChunksEmbeddingColumn: columnType,
       configuredDimension: configuredDimension,
     }
