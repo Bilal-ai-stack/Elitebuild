@@ -306,6 +306,50 @@ export async function GET() {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // 5. Database Schema & Admin User Diagnostics
+  // ---------------------------------------------------------------------------
+  try {
+    const tables: any = await prisma.$queryRawUnsafe(
+      `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;`
+    )
+    const tableNames = Array.isArray(tables) ? tables.map((t: any) => t.table_name) : []
+    const hasAdminTable = tableNames.includes('AdminUser')
+
+    let adminCount = 0
+    let adminUsers: any[] = []
+
+    if (hasAdminTable) {
+      const users = await prisma.adminUser.findMany({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          active: true,
+          createdAt: true,
+          lastLoginAt: true,
+        },
+      })
+      adminCount = users.length
+      adminUsers = users
+    }
+
+    result.databaseDiagnostics = {
+      publicTablesCount: tableNames.length,
+      hasAdminTable,
+      tableNames,
+      adminCount,
+      adminUsers,
+      envAdminEmailConfigured: Boolean(process.env.ADMIN_EMAIL),
+      envAdminPasswordConfigured: Boolean(process.env.ADMIN_PASSWORD),
+    }
+  } catch (dbErr: any) {
+    result.databaseDiagnostics = {
+      error: dbErr?.message || String(dbErr),
+    }
+  }
+
   return NextResponse.json({
     success: true,
     data: result,
@@ -593,6 +637,94 @@ export async function POST(request: Request) {
       completionTokens = genRes.tokens.completion
       generationVerified = genRes.status === 'SUPPORTED' && promptTokens > 0 && completionTokens > 0 && answerText.includes('[')
       log.push(`Generation result: status=${genRes.status}, promptTokens=${promptTokens}, completionTokens=${completionTokens}, hasCitations=${answerText.includes('[')}`)
+    }
+
+    // Step 9: Ensure AdminUser schema and seed initial admin user if configured
+    log.push('Step 9: Ensuring AdminUser schema and seeding initial admin user if configured')
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          CREATE TYPE "UserRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'EDITOR');
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "AdminUser" (
+          "id" TEXT PRIMARY KEY,
+          "email" TEXT UNIQUE NOT NULL,
+          "name" TEXT NOT NULL,
+          "passwordHash" TEXT NOT NULL,
+          "role" "UserRole" NOT NULL DEFAULT 'EDITOR',
+          "active" BOOLEAN NOT NULL DEFAULT true,
+          "lastLoginAt" TIMESTAMP(3),
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "AdminUser_email_idx" ON "AdminUser"("email");
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "AdminUser_role_idx" ON "AdminUser"("role");
+      `)
+
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "AuditLog" (
+          "id" TEXT PRIMARY KEY,
+          "userId" TEXT REFERENCES "AdminUser"("id") ON DELETE SET NULL,
+          "action" TEXT NOT NULL,
+          "entity" TEXT NOT NULL,
+          "entityId" TEXT,
+          "metadata" JSONB,
+          "ipAddress" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "AuditLog_userId_idx" ON "AuditLog"("userId");
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "AuditLog_entity_idx" ON "AuditLog"("entity");
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+      `)
+
+      const adminEmail = (process.env.ADMIN_EMAIL || body.adminEmail || '').trim().toLowerCase()
+      const adminPassword = process.env.ADMIN_PASSWORD || body.adminPassword
+      if (adminEmail && adminPassword) {
+        log.push(`Checking admin user for: ${adminEmail}`)
+        const existing = await prisma.adminUser.findUnique({ where: { email: adminEmail } })
+        const { hashPassword } = await import('@/lib/auth/session')
+        const hash = await hashPassword(adminPassword)
+        if (!existing) {
+          await prisma.adminUser.create({
+            data: {
+              email: adminEmail,
+              name: 'Administrator',
+              passwordHash: hash,
+              role: 'SUPER_ADMIN',
+              active: true,
+            },
+          })
+          log.push(`Admin user seeded: ${adminEmail}`)
+        } else {
+          await prisma.adminUser.update({
+            where: { id: existing.id },
+            data: {
+              passwordHash: hash,
+              active: true,
+              role: 'SUPER_ADMIN',
+            },
+          })
+          log.push(`Admin user password/status updated: ${adminEmail}`)
+        }
+      } else {
+        log.push('No admin credentials available in environment or request body.')
+      }
+    } catch (adminErr: any) {
+      log.push(`Admin schema/seed notice: ${adminErr?.message || adminErr}`)
     }
 
     const totalDuration = Date.now() - startTime

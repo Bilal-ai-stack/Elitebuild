@@ -1,7 +1,7 @@
 // POST /api/auth/login
 import { apiSuccess, apiBadRequest, handleApiError, apiTooManyRequests } from '@/lib/api/response'
 import { loginSchema } from '@/lib/validation'
-import { verifyPassword, createSession } from '@/lib/auth/session'
+import { verifyPassword, createSession, hashPassword } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { getClientIp } from '@/lib/security/sanitize'
 import { createAuditLog } from '@/lib/services/audit'
@@ -15,8 +15,44 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const { email, password } = loginSchema.parse(body)
+    const normalizedEmail = email.trim().toLowerCase()
 
-    const user = await prisma.adminUser.findUnique({ where: { email } })
+    let user = await prisma.adminUser.findUnique({ where: { email: normalizedEmail } })
+    if (!user) {
+      user = await prisma.adminUser.findFirst({
+        where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
+      })
+    }
+
+    // Safe bootstrap/sync: seed or update admin user if environment variables match login attempt
+    const envEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase()
+    const envPassword = process.env.ADMIN_PASSWORD
+
+    if (envEmail && envPassword && normalizedEmail === envEmail && password === envPassword) {
+      if (!user) {
+        const passwordHash = await hashPassword(password)
+        user = await prisma.adminUser.create({
+          data: {
+            email: envEmail,
+            name: 'Administrator',
+            passwordHash,
+            role: 'SUPER_ADMIN',
+            active: true,
+          },
+        })
+      } else if (!user.active || !(await verifyPassword(password, user.passwordHash))) {
+        const passwordHash = await hashPassword(password)
+        user = await prisma.adminUser.update({
+          where: { id: user.id },
+          data: {
+            passwordHash,
+            active: true,
+            role: 'SUPER_ADMIN',
+          },
+        })
+      }
+    }
+
     if (!user || !user.active) {
       return apiBadRequest('Invalid credentials')
     }
@@ -26,7 +62,7 @@ export async function POST(request: Request) {
       await createAuditLog({
         action: 'Failed login attempt',
         entity: 'AdminUser',
-        metadata: { email },
+        metadata: { email: normalizedEmail },
         ipAddress: ip,
       })
       return apiBadRequest('Invalid credentials')
@@ -54,3 +90,4 @@ export async function POST(request: Request) {
     return handleApiError(error)
   }
 }
+
