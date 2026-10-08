@@ -115,9 +115,9 @@ class TestEmbeddingProviders:
 
     def test_mock_provider_returns_correct_dimension(self):
         from rag.embeddings.provider import MockEmbeddingProvider
-        provider = MockEmbeddingProvider(dimension=1536)
+        provider = MockEmbeddingProvider(dimension=384)
         vec = provider.embed("test text")
-        assert len(vec) == 1536
+        assert len(vec) == 384
 
     def test_mock_provider_deterministic(self):
         from rag.embeddings.provider import MockEmbeddingProvider

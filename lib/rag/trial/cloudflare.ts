@@ -68,11 +68,15 @@ export async function getCloudflareEmbedding(
 
     const data = await res.json()
     // Cloudflare response structure: { result: { data: [[...384 float values...]] } }
-    if (data?.result?.data?.[0] && Array.isArray(data.result.data[0])) {
-      return data.result.data[0]
-    }
-    if (data?.result?.shape && Array.isArray(data.result.data)) {
-      return data.result.data[0] || data.result.data
+    // or { result: { shape: [1, 384], data: [[...384 float values...]] } }
+    const rawData = data?.result?.data
+    if (Array.isArray(rawData)) {
+      if (Array.isArray(rawData[0]) && rawData[0].length === CLOUDFLARE_VECTOR_DIMENSION) {
+        return rawData[0]
+      }
+      if (typeof rawData[0] === 'number' && rawData.length === CLOUDFLARE_VECTOR_DIMENSION) {
+        return rawData
+      }
     }
 
     return null

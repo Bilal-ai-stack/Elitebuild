@@ -38,8 +38,8 @@ class TestGroqLLMProviderInitialization:
 
     def test_default_model(self):
         provider = GroqLLMProvider(api_key="test-key")
-        assert provider.get_model_name() == "llama-3.3-70b-versatile"
-        assert provider.model == "llama-3.3-70b-versatile"
+        assert provider.get_model_name() == "qwen/qwen3.8-27b"
+        assert provider.model == "qwen/qwen3.8-27b"
 
     def test_explicit_model_selection(self):
         provider = GroqLLMProvider(model="llama-3.1-8b-instant", api_key="test-key")
@@ -254,7 +254,7 @@ class TestProviderFactory:
     def test_get_llm_provider_groq(self):
         provider = get_llm_provider("groq")
         assert isinstance(provider, GroqLLMProvider)
-        assert provider.get_model_name() == "llama-3.3-70b-versatile"
+        assert provider.get_model_name() == "qwen/qwen3.8-27b"
 
     def test_get_llm_provider_groq_with_custom_model(self):
         provider = get_llm_provider("groq", model="llama-3.1-8b-instant")
@@ -316,7 +316,7 @@ class TestGroundedAnswerGeneratorWithGroq:
         assert gen_result.status == "SUPPORTED"
         assert "Elite Construction Company" in gen_result.answer
         assert len(gen_result.citations) >= 1
-        assert gen_result.model == "llama-3.3-70b-versatile"
+        assert gen_result.model == "qwen/qwen3.8-27b"
         assert gen_result.llm_error is None
 
     def test_generator_with_groq_failure_fallback(self):

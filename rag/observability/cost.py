@@ -29,6 +29,10 @@ MODEL_PRICING: Dict[str, Dict[str, float]] = {
         "output_per_1k": 0.0,
     },
     # Groq Cloud
+    "qwen/qwen3.8-27b": {
+        "input_per_1k": 0.00035,
+        "output_per_1k": 0.00055,
+    },
     "llama-3.3-70b-versatile": {
         "input_per_1k": 0.00059,
         "output_per_1k": 0.00079,

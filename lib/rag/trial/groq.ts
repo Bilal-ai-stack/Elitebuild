@@ -8,7 +8,7 @@
 import type { RagCitation, RagStatus } from '../types.ts'
 import type { TrialEvidenceBlock, GroqGenerationOptions } from './types.ts'
 
-export const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile'
+export const DEFAULT_GROQ_MODEL = 'qwen/qwen3.8-27b'
 
 export const TRIAL_GROUNDED_SYSTEM_PROMPT = `You are the ELITEBUILD Knowledge Assistant for M/S Elite Construction Company (Engineers & Constructors).
 
@@ -167,7 +167,8 @@ export async function generateGroundedAnswer(
   }
 
   const apiKey = options?.apiKey || process.env.GROQ_API_KEY || process.env.GROQ_KEY
-  const model = options?.model || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL
+  const rawModel = options?.model || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL
+  const model = rawModel === 'llama-3.3-70b-versatile' ? DEFAULT_GROQ_MODEL : rawModel
   const context = packageEvidenceContext(evidence)
 
   if (!apiKey) {

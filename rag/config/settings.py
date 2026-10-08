@@ -56,7 +56,7 @@ class RAGSettings(BaseSettings):
     reranker_model: str = Field(default="BAAI/bge-reranker-base", validation_alias="RERANKER_MODEL")
 
     llm_provider: str = Field(default="groq", validation_alias="LLM_PROVIDER")
-    llm_model: str = Field(default="llama-3.3-70b-versatile", validation_alias="LLM_MODEL")
+    llm_model: str = Field(default="qwen/qwen3.8-27b", validation_alias="LLM_MODEL")
     llm_temperature: float = Field(default=0.0, validation_alias="LLM_TEMPERATURE")
     llm_max_output_tokens: int = Field(default=2000, validation_alias="LLM_MAX_OUTPUT_TOKENS")
     llm_timeout_seconds: int = Field(default=30, validation_alias="LLM_TIMEOUT_SECONDS")
@@ -64,7 +64,7 @@ class RAGSettings(BaseSettings):
 
     # Groq Cloud API Configuration
     groq_api_key: Optional[str] = Field(default=None, validation_alias="GROQ_API_KEY")
-    groq_model: str = Field(default="llama-3.3-70b-versatile", validation_alias="GROQ_MODEL")
+    groq_model: str = Field(default="qwen/qwen3.8-27b", validation_alias="GROQ_MODEL")
 
     # Cloud & CORS Configuration
     cors_allowed_origins: str = Field(

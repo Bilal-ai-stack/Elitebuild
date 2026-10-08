@@ -211,7 +211,7 @@ class SentenceTransformerEmbeddingProvider(EmbeddingProvider):
         else:
             self.model_name = configured_model
 
-        self._target_dimension = dimension or (settings.vector_dimension if settings.vector_dimension != 1536 else 0)
+        self._target_dimension = dimension or settings.vector_dimension
         self._pad_to_dimension = pad_to_dimension
         self._model = None
         self._native_dimension = 0
