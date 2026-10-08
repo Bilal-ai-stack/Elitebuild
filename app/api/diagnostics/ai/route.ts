@@ -175,6 +175,39 @@ export async function GET() {
         parsed = null
       }
 
+      const sampleEvidence = `[1] Document: doc-services\n    Section: Services > Core Capabilities\n    Version: 1.0.0\n    Source Authority: VERIFIED_COMPANY_RECORD\n    Evidence:\n    ELITE CONSTRUCTION COMPANY provides six verified core engineering and construction services: 1. Civil Construction (highways, roads, bridges, structural concrete, and buildings).`
+
+      const groundedTestRes = await fetch(groqUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are the ELITEBUILD Knowledge Assistant. Answer using verified evidence with [1] citations.',
+            },
+            {
+              role: 'user',
+              content: `User Question: What services does Elite Construction provide?\n\n<verified_evidence>\n${sampleEvidence}\n</verified_evidence>\n\nPlease provide a grounded factual answer citing the evidence with [1].`,
+            },
+          ],
+          max_tokens: 500,
+          temperature: 0.0,
+        }),
+      })
+
+      const rawGroundedText = await groundedTestRes.text()
+      let parsedGrounded: any = null
+      try {
+        parsedGrounded = JSON.parse(rawGroundedText)
+      } catch {
+        parsedGrounded = null
+      }
+
       result.groqDiagnostics = {
         tested: true,
         httpStatus: gRes.status,
@@ -184,6 +217,14 @@ export async function GET() {
         promptTokens: parsed?.usage?.prompt_tokens ?? null,
         completionTokens: parsed?.usage?.completion_tokens ?? null,
         responseText: parsed?.choices?.[0]?.message?.content ?? null,
+        groundedTest: {
+          httpStatus: groundedTestRes.status,
+          success: groundedTestRes.ok,
+          promptTokens: parsedGrounded?.usage?.prompt_tokens ?? null,
+          completionTokens: parsedGrounded?.usage?.completion_tokens ?? null,
+          responseText: parsedGrounded?.choices?.[0]?.message?.content ?? null,
+          errorMessage: !groundedTestRes.ok ? rawGroundedText.slice(0, 300) : null,
+        },
       }
     } catch (err: any) {
       result.groqDiagnostics = {

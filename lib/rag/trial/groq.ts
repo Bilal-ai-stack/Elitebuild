@@ -207,7 +207,8 @@ export async function generateGroundedAnswer(
     })
 
     if (!res.ok) {
-      console.warn(`Groq API returned HTTP ${res.status}. Using deterministic evidence fallback.`)
+      const errText = await res.text().catch(() => '')
+      console.warn(`Groq API returned HTTP ${res.status}: ${errText}. Using deterministic evidence fallback.`)
       const fallbackAnswer = `${evidence[0].text.slice(0, 350).trim()} [1]`
       const { validatedAnswer, citations } = validateCitations(fallbackAnswer, evidence)
       return {
