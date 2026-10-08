@@ -397,8 +397,9 @@ export async function POST(request: Request) {
 
         const vecLiteral = `[${embedding.join(',')}]`
 
-        // 2. Upsert document
+        // 2. Upsert document via delete then insert
         const docId = chunk.document_id
+        await prisma.$executeRawUnsafe('DELETE FROM rag_documents WHERE document_id = $1;', docId)
         await prisma.$executeRawUnsafe(
           `
           INSERT INTO rag_documents (
@@ -408,11 +409,7 @@ export async function POST(request: Request) {
           ) VALUES (
             $1, $2, 'elitebuild-core', 'VERIFIED_RECORD', $3, $4,
             $5, $6, $7, $8, 'PUBLISHED', 'COMPLETED', 1, $9
-          )
-          ON CONFLICT (document_id) DO UPDATE SET
-            version_tag = EXCLUDED.version_tag,
-            security_access_level = EXCLUDED.security_access_level,
-            updated_at = NOW();
+          );
           `,
           `doc-pk-${docId}`,
           docId,
@@ -425,7 +422,8 @@ export async function POST(request: Request) {
           chunk.char_count
         )
 
-        // 3. Upsert chunk with vector
+        // 3. Upsert chunk with vector via delete then insert
+        await prisma.$executeRawUnsafe('DELETE FROM rag_chunks WHERE chunk_id = $1;', chunk.chunk_id)
         await prisma.$executeRawUnsafe(
           `
           INSERT INTO rag_chunks (
@@ -438,12 +436,7 @@ export async function POST(request: Request) {
             $5, $6, $7, $8, $9,
             $10::vector, $11, $12, $13,
             $14, $15, 'PUBLISHED'
-          )
-          ON CONFLICT (chunk_id) DO UPDATE SET
-            embedding = EXCLUDED.embedding,
-            chunk_text = EXCLUDED.chunk_text,
-            security_access_level = EXCLUDED.security_access_level,
-            version_tag = EXCLUDED.version_tag;
+          );
           `,
           `chk-pk-${chunk.chunk_id}`,
           chunk.chunk_id,
