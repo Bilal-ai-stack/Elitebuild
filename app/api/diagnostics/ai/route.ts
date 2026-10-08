@@ -404,11 +404,14 @@ export async function POST(request: Request) {
           `
           INSERT INTO rag_documents (
             id, document_id, tenant_id, source_type, title, version_tag,
-            security_access_level, jurisdiction, source_authority,
-            content_hash, content_status, ingestion_status, chunk_count, raw_text_length
+            timestamp, security_access_level, jurisdiction, source_authority,
+            content_hash, content_status, ingestion_status, chunk_count, raw_text_length,
+            created_at, updated_at
           ) VALUES (
             $1, $2, 'elitebuild-core', 'VERIFIED_RECORD', $3, $4,
-            $5, $6, $7, $8, 'PUBLISHED', 'COMPLETED', 1, $9
+            NOW(), $5, $6, $7,
+            $8, 'PUBLISHED', 'COMPLETED', 1, $9,
+            NOW(), NOW()
           );
           `,
           `doc-pk-${docId}`,
@@ -430,12 +433,12 @@ export async function POST(request: Request) {
             id, chunk_id, document_id, rag_document_id, tenant_id,
             chunk_index, heading_path, chunk_text, char_count, token_estimate,
             embedding, security_access_level, source_authority, version_tag,
-            jurisdiction, content_hash, content_status
+            timestamp, jurisdiction, content_hash, content_status, created_at
           ) VALUES (
             $1, $2, $3, $4, 'elitebuild-core',
             $5, $6, $7, $8, $9,
             $10::vector, $11, $12, $13,
-            $14, $15, 'PUBLISHED'
+            NOW(), $14, $15, 'PUBLISHED', NOW()
           );
           `,
           `chk-pk-${chunk.chunk_id}`,
