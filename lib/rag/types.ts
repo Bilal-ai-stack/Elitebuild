@@ -158,6 +158,8 @@ export interface RagOperationalReport {
   timestamp: string
   environment: string
   rag_version: string
+  rag_mode?: 'trial' | 'production' | string
+  mode_label?: string
   service_status: ServiceHealthStatus | string
   uptime_seconds: number
   component_status: Record<string, ComponentHealthStatus | string>

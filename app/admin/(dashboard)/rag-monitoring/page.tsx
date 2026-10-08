@@ -123,19 +123,25 @@ export default function AdminRagMonitoringPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-[#17212b]">RAG Production Monitoring</h1>
             {report && (
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusColor(
-                  report.service_status
-                )}`}
-              >
-                {report.service_status === 'HEALTHY' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                {report.service_status === 'DEGRADED' && <AlertTriangle className="h-3.5 w-3.5" />}
-                {report.service_status === 'UNAVAILABLE' && <AlertCircle className="h-3.5 w-3.5" />}
-                {report.service_status}
-              </span>
+              <>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusColor(
+                    report.service_status
+                  )}`}
+                >
+                  {report.service_status === 'HEALTHY' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                  {report.service_status === 'DEGRADED' && <AlertTriangle className="h-3.5 w-3.5" />}
+                  {report.service_status === 'UNAVAILABLE' && <AlertCircle className="h-3.5 w-3.5" />}
+                  {report.service_status}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-800">
+                  <Layers className="h-3.5 w-3.5 text-sky-600" />
+                  MODE: {report.mode_label || (report.rag_mode === 'trial' ? 'TRIAL / SERVERLESS' : 'PRODUCTION / FASTAPI')}
+                </span>
+              </>
             )}
           </div>
           <p className="mt-1 text-xs text-[#5e6873]">
@@ -181,7 +187,7 @@ export default function AdminRagMonitoringPage() {
             </div>
             <p className="mt-2 text-xl font-bold text-[#17212b]">{report.service_status}</p>
             <p className="mt-1 text-xs text-[#5e6873]">
-              v{report.rag_version} ({report.environment}) • {report.uptime_seconds > 0 ? `${report.uptime_seconds}s uptime` : 'Offline'}
+              {report.mode_label || (report.rag_mode === 'trial' ? 'TRIAL / SERVERLESS' : 'PRODUCTION / FASTAPI')} • v{report.rag_version}
             </p>
           </div>
 
@@ -234,16 +240,20 @@ export default function AdminRagMonitoringPage() {
         </div>
       )}
 
-      {/* Subsystem Health Grid (12 Components) */}
+      {/* Subsystem Health Grid */}
       {report && (
         <div className="border border-[#e7ebef] bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold uppercase tracking-wider text-[#17212b]">
-                12-Subsystem Health & Dependency Model
+                {report.rag_mode === 'trial'
+                  ? 'Serverless Subsystem Health & Probes'
+                  : '12-Subsystem Health & Dependency Model'}
               </h2>
               <p className="text-xs text-[#5e6873]">
-                Non-destructive real-time probes across core pipeline services and storage layers.
+                {report.rag_mode === 'trial'
+                  ? 'Real-time probes across Next.js RAG API, Neon pgvector, Cloudflare AI, Groq LLM, and storage.'
+                  : 'Non-destructive real-time probes across core pipeline services and storage layers.'}
               </p>
             </div>
             <span className="text-[11px] text-[#5e6873]">
@@ -259,7 +269,31 @@ export default function AdminRagMonitoringPage() {
               >
                 <div className="min-w-0 pr-2">
                   <p className="truncate font-semibold capitalize text-[#17212b]">
-                    {compName.replace(/_/g, ' ')}
+                    {report.rag_mode === 'trial'
+                      ? compName === 'api'
+                        ? 'Next.js RAG API'
+                        : compName === 'database'
+                        ? 'Neon PostgreSQL'
+                        : compName === 'pgvector'
+                        ? 'pgvector Extension'
+                        : compName === 'embedding_provider'
+                        ? 'Cloudflare Embedding'
+                        : compName === 'reranker'
+                        ? 'Cloudflare Reranker'
+                        : compName === 'llm'
+                        ? 'Groq LLM'
+                        : compName === 'storage'
+                        ? 'R2 Storage'
+                        : compName === 'citation_validation'
+                        ? 'Citation Validation'
+                        : compName === 'retrieval'
+                        ? 'Retrieval Engine'
+                        : compName === 'ingestion'
+                        ? 'Corporate Ingestion'
+                        : compName === 'telemetry'
+                        ? 'Telemetry & Tracing'
+                        : compName.replace(/_/g, ' ')
+                      : compName.replace(/_/g, ' ')}
                   </p>
                   <p className="text-[10px] text-[#5e6873]">Subsystem</p>
                 </div>
