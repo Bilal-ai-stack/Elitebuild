@@ -29,6 +29,7 @@ import {
 import { PublicHeader } from '@/components/public-header'
 import { PublicFooter } from '@/components/public-footer'
 import { ContactForm } from '@/components/contact-form'
+import { KnowledgeSearchSection } from '@/components/rag/knowledge-search-section'
 import { createWhatsAppLink, isWhatsAppConfigured } from '@/lib/services/whatsapp'
 
 const defaultServices = [
@@ -669,6 +670,8 @@ export function ElitebuildLanding({
       )}
 
       {/* Interactive Contact & Inquiry Section */}
+      <KnowledgeSearchSection />
+
       <section id="contact" className="bg-[#f7f8fa] py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
